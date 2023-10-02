@@ -1,5 +1,11 @@
 # Getting Started with Create React App
 
+│ Navigate to the new directory cd babylon
+│ Run the development server `npm run pages:dev`
+│ Deploy your application `npm run pages:deploy`
+│ Read the documentation `https://developers.cloudflare.com/pages`
+
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
