@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import setup from './scripts/setup';
+import  BabylonComponent from './scripts/setup';
+
 
 
 
@@ -20,7 +21,7 @@ function App() {
     useEffect(() => {
         
         if(!IsReady){
-            setup.setupBaby(document.querySelector('#renderCanvas'))
+           // setupBaby(document.querySelector('#renderCanvas'))
         }
         setIsReady(true);
         //handle rerender on window size change
@@ -50,9 +51,10 @@ function App() {
 
 
         <div className="App">
-            <canvas
+            {/* <canvas
                 id="renderCanvas" >
-            </canvas>
+            </canvas> */}
+            <BabylonComponent></BabylonComponent>
             <button
             id='show-hide'
             onClick={() => setShowHide(!ShowHide)}
