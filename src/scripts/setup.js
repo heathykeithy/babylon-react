@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'
 
 import {
     Scene,
@@ -11,182 +11,163 @@ import {
     PBRMaterial,
     WebGPUEngine,
     SceneLoader,
-    Color3
-} from "@babylonjs/core";
+    Color3,
+    StandardMaterial,
+    MeshBuilder,
+    CubeTexture,
+    Texture,
+    Space
+} from "@babylonjs/core"
 import "@babylonjs/loaders"
 
 
-
+let orange = {}
 const BabylonComponent = () => {
 
-    const [scene, setScene] = useState(null);
-  // const [man, setMan] = useState({});
-  //  const [building, setBuilding] = useState({});
+    const [scene, setScene] = useState(null)
+    const [man, setMan] = useState({})
+    const [building1, setBuilding] = useState({})
     const [camera, setCamera] = useState({})
+    const [GPUengine, setGPUengine] = useState({})
+
+    let resizeTimeout
+    let windowSize = useRef([]);
 
     useEffect(() => {
-        const canvas = document.getElementById("renderCanvas");
-        const engine = new WebGPUEngine(canvas);
-        //engine.initAsync();
+        const canvas = document.getElementById("renderCanvas")
+        const engine = new WebGPUEngine(canvas)
+        //engine.initAsync()
 
         const createScene = async () => {
             //scene
-            await engine.initAsync();
-            const newScene = new Scene(engine);
-            
+            await engine.initAsync()
+            const newScene = new Scene(engine)
+
             //camera
-            var camera =  new ArcRotateCamera("camera", Tools.ToRadians(90), Tools.ToRadians(65), 10, Vector3.Zero(), newScene)
-            camera.setTarget(Vector3.Zero());
-            camera.attachControl(canvas, true);
+            var camera = new ArcRotateCamera("camera", Tools.ToRadians(45), Tools.ToRadians(65), 10, Vector3.Zero(), newScene)
+            camera.setTarget(Vector3.Zero())
+            camera.attachControl(canvas, true)
             //lights
-            var light = new HemisphericLight("light1", new Vector3(0, 1, 0), newScene);
-            light.intensity = 0.7;
+            var light = new HemisphericLight("light1", new Vector3(0, 1, 0), newScene)
+            light.intensity = 0.7
             //materials
             var pbr = new PBRMaterial()
-            pbr.albedoColor = new Color3(1,0.5,0)
-            pbr.metallic = 0.1;
-            pbr.roughness = 0.1;
-            
+            pbr.albedoColor = new Color3(1, 0.5, 0)
+            pbr.metallic = 0.1
+            pbr.roughness = 0.1
+            orange = pbr
 
             //3d objects
-            var sphere = CreateSphere("sphere1", { segments: 16, diameter: 2 }, newScene);
-            sphere.position.y = 2;
-            sphere.material = pbr;
+            var sphere = CreateSphere("sphere1", { segments: 16, diameter: 2 }, newScene)
+            sphere.position.y = 2
+            sphere.material = pbr
 
             // ground
-            var ground = CreateGround("ground1", { width: 6, height: 6, subdivisions: 2 }, newScene);
-            ground.material = pbr;
+            var ground = CreateGround("ground1", { width: 256, height: 256, subdivisions: 2 }, newScene)
+            ground.material = pbr
+
+
+
+            //environment 
+            const skybox = MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, newScene);
+            const skyboxMaterial = new StandardMaterial("skyBox", newScene);
+            skyboxMaterial.backFaceCulling = false;
+            skyboxMaterial.reflectionTexture = new CubeTexture("./media/textures/skybox/skybox", newScene);
+            skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
+            skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
+            skyboxMaterial.specularColor = new Color3(0, 0, 0);
+            skybox.material = skyboxMaterial;
+
+
+            //   var man = {}
+            var building = {}
+
+            // loadMeshes(man, "./media/", "man.glb", newScene)
+            loadMeshes(building, "./media/", "building.glb", newScene)
+
+            setGPUengine(engine)
+            //    setMan(man)
+            setBuilding(building)
+            setScene(newScene)
+            setCamera(camera)
             
-            
+           
+            //building.parent = ground; 
+
+
+            const handleResize = () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    windowSize.current = [window.innerWidth, window.innerHeight];
+                    engine.resize();
+                }, 200);
+            };
+        
+            window.addEventListener('resize', handleResize);
+
+          
+
+
+
             //Render every frame
             engine.runRenderLoop(() => {
-                //rotateRender(ground)
-                newScene.render();
-            });
-            
-           // setMan(man);
-           // setBuilding(building);
+               // rotateRender(ground)
 
+                newScene.render()
+            })
 
-            setScene(newScene);
-        };
+        }
 
-        createScene();
+        createScene()
 
 
 
         // return () => {
-        //     engine.dispose(); // Cleanup the engine when the component unmounts
-        // };
-    }, []);
+        //     engine.dispose() // Cleanup the engine when the component unmounts
+        // }
+    }, [])
+
+
+
 
     return (
         <div>
-            <canvas id="renderCanvas" style={{ width: '100%', height: '100vh' }}></canvas>
+            <canvas id="renderCanvas" ></canvas>
         </div>
-    );
+    )
 }
 
-export default BabylonComponent;
-
-
-// let scene = {}
-// const man = {}
-// export const building = {}
+export default BabylonComponent
 
 
 
-
-// export async function setupBaby(element) {
-//     // Get the canvas element from the DOM.
-//     const canvas = element;
-
-//     // Associate a Babylon Engine to it.
-//    // const engine = new Engine(canvas);
-//     const engine = new WebGPUEngine(canvas); 
-//     await engine.initAsync(); //requirment of WEBGPU
-
-//     // Create our first scene.
-//     //var scene = new Scene(engine);
-//     scene = new Scene(engine);
-
-//     // This creates and positions a free camera (non-mesh)
-//     //var camera = new FreeCamera("camera1", new Vector3(0, 5, -10), scene);
-//     var camera = new ArcRotateCamera("camera", Tools.ToRadians(90), Tools.ToRadians(65), 10, Vector3.Zero(), scene);
-
-
-//     // This targets the camera to scene origin
-//     camera.setTarget(Vector3.Zero());
-
-//     // This attaches the camera to the canvas
-//     camera.attachControl(canvas, true);
-
-//     // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-//     var light = new HemisphericLight("light1", new Vector3(0, 1, 0), scene);
-
-//     // Default intensity is 1. Let's dim the light a small amount
-//     light.intensity = 0.7;
-
-//     // Create a pbr material
-//    // var material = new PBRBaseSimpleMaterial("pbr", scene);
-//  //   material.metallicReflectanceColor = new Color3(1,0.5,0)
-
-
-//     var pbr = new PBRMaterial()
-//     pbr.albedoColor = new Color3(1,0.5,0)
-//     pbr.metallic = 0.1;
-//     pbr.roughness = 0.1;
-    
-
-//     // Our built-in 'sphere' shape.
-//     var sphere = CreateSphere("sphere1", { segments: 16, diameter: 2 }, scene);
-
-//     sphere.position.y = 2;
-
-//     // Affect a material
-//     sphere.material = pbr;
-
-//     // Our built-in 'ground' shape.
-//     var ground = CreateGround("ground1", { width: 6, height: 6, subdivisions: 2 }, scene);
-
-//     // Affect a material
-//     ground.material = pbr;
-
-//     loadMeshes(man, "./media/", "man.glb")
-//     loadMeshes(building, "./media/", "building.glb")
-//     building.scale = new Vector3(2,2,2)
-//     building.partent = ground
-    
-
-//     // Render every frame
-//     engine.runRenderLoop(() => {
-//         rotateRender(ground)
-//         scene.render();
-//     });
-// }
-
-function rotateRender(mesh){
+function rotateRender(mesh) {
     mesh.rotate(new Vector3(0, 1, 0), 0.002)
 }
 
 
 
 
-// function loadMeshes(obj, path, filename) {
-//    // man.file = await SceneLoader.AppendAsync("https://patrickryanms.github.io/BabylonJStextures/Demos/sodaman/assets/gltf/sodaman.gltf");
-//         obj.file = SceneLoader.ImportMesh("", path, filename, scene, (meshes, ps, sk, ani) => {
-//         console.log("Meshes", meshes)
-//         console.log("Ani", ani)
-//         meshes.forEach(element => {
-//             obj[element.name] = scene.getMeshByName(element.name);
-//             console.log(element.name)
-//             element.isVisible = false
-//         });
-//         console.log(obj)
-//         obj.__root__.position = new Vector3(2, 0.0, 0.0)
-        
-    
-//     });
-    
-// }
+function loadMeshes(obj, path, filename, scene) {
+    // man.file = await SceneLoader.AppendAsync("https://patrickryanms.github.io/BabylonJStextures/Demos/sodaman/assets/gltf/sodaman.gltf")
+    obj.file = SceneLoader.ImportMesh("", path, filename, scene, (meshes, ps, sk, ani) => {
+        console.log("Meshes", meshes)
+        console.log("Ani", ani)
+        let side = 0
+        meshes.forEach(element => {
+            obj[element.name] = scene.getMeshByName(element.name)
+            console.log(element.name)
+            element.material = orange
+            element.scaling = new Vector3(2,2,2)
+            element.rotate(new Vector3(0, 1, 0), Tools.ToRadians(side), Space.WORLD)
+            side = side + 90
+            //element.isVisible = false
+        })
+        console.log(obj)
+        //obj.__root__.position = new Vector3(2, 0.0, 0.0)
+
+
+    })
+
+}
 

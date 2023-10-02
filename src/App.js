@@ -1,59 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
-import logo from './logo.svg';
+import { useState } from 'react';
+
 import './App.css';
 import  BabylonComponent from './scripts/setup';
 
-
-
-
-
 function App() {
-    const [IsReady, setIsReady] = useState(false)
     const [ShowHide, setShowHide] = useState(false)
-    // const [windowSize, setWindowSize] = useState({
-    //     width: window.innerWidth,
-    //     height: window.innerHeight
-    // });
-    let windowSize = useRef([]);
-    
-
-
-    useEffect(() => {
-        
-        if(!IsReady){
-           // setupBaby(document.querySelector('#renderCanvas'))
-        }
-        setIsReady(true);
-        //handle rerender on window size change
-
-        const printsize = () =>{
-            windowSize = [window.innerWidth,window.innerHeight]
-            console.log(windowSize)
-            
-        }
-
-        // if(ShowHide){
-        //     building.forEach(element => {
-        //         element.isVisible = true
-        //     });
-        // }
-        window.addEventListener('resize', printsize);
-
-        // Cleanup 
-        return () => {
-            setIsReady(false);
-           // window.removeEventListener('resize', updateWindowSize);
-        };
-    }, []);
 
 
     return (
-
-
         <div className="App">
-            {/* <canvas
-                id="renderCanvas" >
-            </canvas> */}
             <BabylonComponent></BabylonComponent>
             <button
             id='show-hide'
@@ -61,23 +16,7 @@ function App() {
             >
                 show
                 </button>
-            {/* <header className="App-header">
-                <img src={logo} className="App-logo" alt="logo" />
-                <p>
-                    Edit <code>src/App.js</code> and save to reload.
-                </p>
-                <a
-                    className="App-link"
-                    href="https://reactjs.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Learn React
-                </a>
-            </header> */}
-
         </div>
-
     );
 
 }
