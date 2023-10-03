@@ -4,6 +4,7 @@ import './App.css';
 import BabylonComponent from './scripts/setup';
 
 
+
 function App() {
     const [ShowHide, setShowHide] = useState({
         "frame": true,
@@ -24,12 +25,30 @@ function App() {
         <div className="App">
             <div className="gui">
                 <button
-                    id='show-hide'
                     className="button-87"
                     onClick={() => clickHandler('frame')}
                     >
                     Frame
                 </button>
+                <button
+                    className="button-87"
+                    onClick={() => clickHandler('window')}
+                    >
+                    window
+                </button>
+                <button
+                    className="button-87"
+                    onClick={() => clickHandler('door')}
+                    >
+                    door
+                </button>
+                <button
+                    className="button-87"
+                    onClick={() => clickHandler('wall')}
+                    >
+                    wall
+                </button>
+
             </div>
             <BabylonComponent hideflags={ShowHide}>
             </BabylonComponent>

@@ -1,5 +1,10 @@
+body{
+    overflow-y: hidden;
+}
+
 .App {
   text-align: center;
+  
 }
 
 .App-logo {
@@ -47,7 +52,7 @@
 
 .gui {
     position: absolute;
-    
+
 }
 
 
