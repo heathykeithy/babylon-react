@@ -22,19 +22,23 @@ import "@babylonjs/loaders"
 
 
 let orange = {}
-const BabylonComponent = () => {
+
+const BabylonComponent = ({ hideflags }) => {
 
     const [scene, setScene] = useState(null)
-    const [man, setMan] = useState({})
-    const [building1, setBuilding] = useState({})
-    const [camera, setCamera] = useState({})
     const [GPUengine, setGPUengine] = useState({})
+    const [babylonObjects, setBabylonObjects] = useState([])
+    const renderCanvas = useRef(null);
 
     let resizeTimeout
     let windowSize = useRef([]);
 
+
     useEffect(() => {
-        const canvas = document.getElementById("renderCanvas")
+
+
+        //const canvas = document.getElementById("renderCanvas")
+        const { current: canvas } = renderCanvas
         const engine = new WebGPUEngine(canvas)
         //engine.initAsync()
 
@@ -87,52 +91,88 @@ const BabylonComponent = () => {
 
             setGPUengine(engine)
             //    setMan(man)
-            setBuilding(building)
+
             setScene(newScene)
-            setCamera(camera)
-            
-           
+
+            setBabylonObjects([...babylonObjects, ground, camera, building]);
+
             //building.parent = ground; 
 
 
             const handleResize = () => {
                 clearTimeout(resizeTimeout);
+                // eslint-disable-next-line react-hooks/exhaustive-deps
                 resizeTimeout = setTimeout(() => {
                     windowSize.current = [window.innerWidth, window.innerHeight];
                     engine.resize();
                 }, 200);
             };
-        
+
             window.addEventListener('resize', handleResize);
 
-          
 
 
 
-            //Render every frame
-            engine.runRenderLoop(() => {
-               // rotateRender(ground)
 
-                newScene.render()
-            })
+            // //Render every frame
+            // engine.runRenderLoop(() => {
+            //     if(!test){
+            //        rotateRender(ground) 
+            //     }
+
+
+            //     newScene.render()
+            // })
 
         }
+        if (!scene) {
+            createScene()
+        }
 
-        createScene()
+
+        //Render every frame
 
 
 
         // return () => {
-        //     engine.dispose() // Cleanup the engine when the component unmounts
+
+        //    // GPUengine.dispose() // Cleanup the engine when the component unmounts
         // }
     }, [])
 
+    if (scene) {
+        GPUengine.runRenderLoop(() => {
+            //  rotateRender(babylonObjects[0])
+            scene.render()
+        })
+    }
 
+
+    //show or hide meshes
+    useEffect(() => {
+
+        if (babylonObjects[2]) {
+           let x = 0 
+            babylonObjects[2].Frame ?  babylonObjects[2].Frame.isVisible = hideflags.frame : x = true
+            babylonObjects[2].windowsmesh ?  babylonObjects[2].windowsmesh.isVisible = hideflags.window : x = true
+            babylonObjects[2].door?  babylonObjects[2].door.isVisible = hideflags.door : x = true
+            babylonObjects[2].Wall?   babylonObjects[2].Wall.isVisible = hideflags.wall : x = true
+            
+        }
+
+
+
+
+    }, [hideflags])
 
 
     return (
         <div>
-            <canvas id="renderCanvas" ></canvas>
+            <canvas
+                ref={renderCanvas}
+                id="renderCanvas"
+            >
+            </canvas>
         </div>
     )
 }
@@ -142,7 +182,10 @@ export default BabylonComponent
 
 
 function rotateRender(mesh) {
+
     mesh.rotate(new Vector3(0, 1, 0), 0.002)
+
+
 }
 
 
@@ -158,7 +201,7 @@ function loadMeshes(obj, path, filename, scene) {
             obj[element.name] = scene.getMeshByName(element.name)
             console.log(element.name)
             element.material = orange
-            element.scaling = new Vector3(2,2,2)
+            element.scaling = new Vector3(2, 2, 2)
             element.rotate(new Vector3(0, 1, 0), Tools.ToRadians(side), Space.WORLD)
             side = side + 90
             //element.isVisible = false
