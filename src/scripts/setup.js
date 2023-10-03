@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 
 import {
+    Engine,
     Scene,
     ArcRotateCamera,
     HemisphericLight,
@@ -19,6 +20,7 @@ import {
     Space,
 } from "@babylonjs/core"
 import "@babylonjs/loaders"
+//import { init } from './checkgpu'
 
 let orange = {}
 
@@ -28,17 +30,24 @@ const BabylonComponent = ({ hideflags }) => {
     const [GPUengine, setGPUengine] = useState({})
     const [babylonObjects, setBabylonObjects] = useState([])
     const renderCanvas = useRef(null);
-
     let resizeTimeout
     let windowSize = useRef([]);
 
+
     useEffect(() => {
-        const createScene = async () => {
+        const createScene = async (GPU) => {
             console.log("building scene")
             const { current: canvas } = renderCanvas
-            const engine = new WebGPUEngine(canvas)
+            var engine 
+            if(GPU){
+                engine = new WebGPUEngine(canvas)
+                await engine.initAsync()
+            }
+            else{
+                engine = new Engine(canvas)
+            }
+
             //scene
-            await engine.initAsync()
             const newScene = new Scene(engine)
 
             //camera
@@ -102,10 +111,19 @@ const BabylonComponent = ({ hideflags }) => {
             }
         }
         if (!scene) {
-            createScene()
+            if (!navigator.gpu) {
+                console.warn("WebGPU not supported.")
+                console.warn("Switching to WebGL")
+                createScene(false) //with webGL
+            }
+            else{
+                console.log("Using WebGPU")
+                createScene(true) //with LwebGPU
+            }
+            
         }
 
-    }, [babylonObjects, scene, GPUengine])
+    }, [])
 
     if (scene) {
         GPUengine.runRenderLoop(() => {
