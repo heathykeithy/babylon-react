@@ -38,6 +38,11 @@ body{
     height: 100vh;
 }
 
+#renderType{
+    position: absolute;
+    top: 0;
+    right: 20px;
+}
 
 @keyframes App-logo-spin {
   from {
