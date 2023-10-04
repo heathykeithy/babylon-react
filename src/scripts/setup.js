@@ -114,9 +114,37 @@ const BabylonComponent = ({ hideflags }) => {
         sceneBuild(engine, canvas)
     }
 
+
+    function isSupportedBrowser() {
+        var userAgent = navigator.userAgent;
+        var chromeMatch = userAgent.match(/Chrome\/(\d+)/);
+        var edgeMatch = userAgent.match(/Edge\/(\d+)/);
+        var firefoxMatch = userAgent.match(/Firefox\/(\d+)/);
+        var operaMatch = userAgent.match(/OPR\/(\d+)/);
+    
+        if (
+            (chromeMatch && parseInt(chromeMatch[1], 10) >= 113) ||
+            (edgeMatch && parseInt(edgeMatch[1], 10) >= 113) ||
+            (firefoxMatch && parseInt(firefoxMatch[1], 10) >= 113) ||
+            (operaMatch && parseInt(operaMatch[1], 10) >= 100)
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+
+
     //entry point
     useEffect(() => {
         if (Object.keys(scene).length === 0) {
+            if(!isSupportedBrowser){
+                console.warn("WebGPU not supported by browser")
+                createSceneWebGL() //with webGL
+                webGL.current = true
+                return
+            }
             if (!navigator.gpu) {
                 console.warn("WebGPU not supported.")
                 console.warn("Switching to WebGL")
