@@ -9,8 +9,10 @@ If your browser or GPU is incompatible, the app will fallback to WebGL
 
 further reading on WebGPU here at [mdn web docs](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)
 
-### This app is using Cloudflare Pages
 
+![](./demo.gif)
+
+### This app is using Cloudflare Pages
 
 │ Run the development server `npm run pages:dev`
 │ Deploy your application `npm run pages:deploy`
