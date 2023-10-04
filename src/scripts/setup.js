@@ -22,31 +22,23 @@ import {
 import "@babylonjs/loaders"
 //import { init } from './checkgpu'
 
-let orange = {}
+
 
 const BabylonComponent = ({ hideflags }) => {
 
     const [scene, setScene] = useState(null)
+
     const [GPUengine, setGPUengine] = useState({})
     const [babylonObjects, setBabylonObjects] = useState([])
     const renderCanvas = useRef(null);
     let resizeTimeout
     let windowSize = useRef([]);
-
+    const orange = useRef({})
+    //let orange = {}
 
     useEffect(() => {
-        const createScene = async (GPU) => {
-            console.log("building scene")
-            const { current: canvas } = renderCanvas
-            var engine 
-            if(GPU){
-                engine = new WebGPUEngine(canvas)
-                await engine.initAsync()
-            }
-            else{
-                engine = new Engine(canvas)
-            }
 
+        const sceneBuild = (engine, canvas) => {
             //scene
             const newScene = new Scene(engine)
 
@@ -63,9 +55,10 @@ const BabylonComponent = ({ hideflags }) => {
             pbr.albedoColor = new Color3(1, 0.5, 0)
             pbr.metallic = 0.1
             pbr.roughness = 0.1
-            orange = pbr
+            orange.current = pbr
+            //orange = pbr
 
-            var brown = orange.clone("brownMaterial");
+            var brown = orange.current.clone("brownMaterial");
             brown.albedoColor = new Color3(0.7, 0.1, 0);
 
             //3d objects
@@ -109,18 +102,34 @@ const BabylonComponent = ({ hideflags }) => {
                 engine.dispose()
                 GPUengine.dispose() // Cleanup the engine when the component unmounts
             }
+
         }
+        //webGPU engine
+        const createSceneGPU = async () => {
+            const { current: canvas } = renderCanvas
+            const engine = new WebGPUEngine(canvas)
+            await engine.initAsync()
+            sceneBuild(engine, canvas)
+        }
+
+        //webGPU engine
+        const createSceneWebGL =() => {
+            const { current: canvas } = renderCanvas
+            const engine = new Engine(canvas, true)
+            sceneBuild(engine, canvas)
+        }
+
         if (!scene) {
             if (!navigator.gpu) {
                 console.warn("WebGPU not supported.")
                 console.warn("Switching to WebGL")
-                createScene(false) //with webGL
+                createSceneWebGL() //with webGL
             }
-            else{
+            else {
                 console.log("Using WebGPU")
-                createScene(true) //with LwebGPU
+                createSceneGPU() //with webGPU
             }
-            
+
         }
 
     }, [])
@@ -144,6 +153,26 @@ const BabylonComponent = ({ hideflags }) => {
         }
     }, [hideflags])
 
+
+
+    function loadMeshes(obj, path, filename, scene) {
+        // obj.file = await SceneLoader.AppendAsync("")
+        obj.file = SceneLoader.ImportMesh("", path, filename, scene, (meshes, ps, sk, ani) => {
+            console.log("Meshes", meshes)
+            console.log("Ani", ani)
+            let side = 0
+            meshes.forEach(element => {
+                obj[element.name] = scene.getMeshByName(element.name)
+                console.log(element.name)
+                element.material = orange.current
+                element.scaling = new Vector3(2, 2, 2)
+                element.rotate(new Vector3(0, 1, 0), Tools.ToRadians(side), Space.WORLD)
+                side = side + 90
+            })
+            console.log(obj)
+        })
+    }
+
     return (
         <div>
             <canvas
@@ -161,21 +190,21 @@ function rotateRender(mesh) {
     mesh.rotate(new Vector3(0, 1, 0), 0.002)
 }
 
-function loadMeshes(obj, path, filename, scene) {
-    // obj.file = await SceneLoader.AppendAsync("")
-    obj.file = SceneLoader.ImportMesh("", path, filename, scene, (meshes, ps, sk, ani) => {
-        console.log("Meshes", meshes)
-        console.log("Ani", ani) 
-        let side = 0
-        meshes.forEach(element => {
-            obj[element.name] = scene.getMeshByName(element.name)
-            console.log(element.name)
-            element.material = orange
-            element.scaling = new Vector3(2, 2, 2)
-            element.rotate(new Vector3(0, 1, 0), Tools.ToRadians(side), Space.WORLD)
-            side = side + 90
-        })
-        console.log(obj)
-    })
-}
+// function loadMeshes(obj, path, filename, scene) {
+//     // obj.file = await SceneLoader.AppendAsync("")
+//     obj.file = SceneLoader.ImportMesh("", path, filename, scene, (meshes, ps, sk, ani) => {
+//         console.log("Meshes", meshes)
+//         console.log("Ani", ani)
+//         let side = 0
+//         meshes.forEach(element => {
+//             obj[element.name] = scene.getMeshByName(element.name)
+//             console.log(element.name)
+//             element.material = orange
+//             element.scaling = new Vector3(2, 2, 2)
+//             element.rotate(new Vector3(0, 1, 0), Tools.ToRadians(side), Space.WORLD)
+//             side = side + 90
+//         })
+//         console.log(obj)
+//     })
+// }
 
