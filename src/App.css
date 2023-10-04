@@ -42,6 +42,7 @@ body{
     position: absolute;
     top: 0;
     right: 20px;
+    width: 50vw;
 }
 
 @keyframes App-logo-spin {
