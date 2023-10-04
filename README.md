@@ -2,6 +2,8 @@
 ## This app runs using WebGPU 
 WebGPU is the soon to be the new standard for web-based graphic applications
 
+If your browser or GPU is incompatible, the app will fallback to WebGL 
+
 > WebGPU is an API that exposes the capabilities of GPU hardware for the Web. The API is designed from the ground up to efficiently map to (post-2014) native GPU APIs. WebGPU is not related to WebGL and does not explicitly target OpenGL ES.
 >  - Sited from w3.org/TR/webgpu
 
