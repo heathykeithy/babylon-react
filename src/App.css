@@ -143,3 +143,9 @@ body {
   .dimensions button:hover {
     background-color: #45a049;
   }
+
+  h4 {
+    color: white;
+    font-family: Arial, sans-serif;
+    margin-left: 10px;
+  }

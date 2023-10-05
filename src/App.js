@@ -1,37 +1,31 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react'
 
-import './App.css';
-import BabylonComponent from './scripts/setup';
-import Gui from './components/gui';
+import './App.css'
+import BabylonComponent from './scripts/setup'
+import Gui from './components/gui'
 
 
  function App() {
-//     const [ShowHide, setShowHide] = useState({
-//         "frame": true,
-//         "window": true,
-//         "door": true,
-//         "wall": true
-//     })
+
 const [scene,setScene] = useState({})
+const [canvas,setCanvas] = useState({})
 
     const handleBabscene = (data) =>{
         setScene(data)
     }
-    // const clickHandler = useCallback((key) => {
-    //     setShowHide(prevState => ({
-    //       ...prevState,
-    //       [key]: !prevState[key]
-    //     }));
-    //   }, []);
+    const handleCanvas = (data) =>{
+        setCanvas(data)
+    }
+
 
     return (
         <div className="App">
-            <Gui scene={scene}></Gui>
-            <BabylonComponent babScene={handleBabscene}>
+            <Gui scene={scene} canvas={canvas}></Gui>
+            <BabylonComponent babScene={handleBabscene} babCanvas={handleCanvas}>
             </BabylonComponent>
         </div>
-    );
+    )
 
 }
 
-export default App;
+export default App

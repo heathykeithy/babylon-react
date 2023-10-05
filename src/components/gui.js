@@ -1,33 +1,42 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { createCube, changeColor, screenPos } from '../scripts/setup'
-import { GithubPicker } from 'react-color';
+import { createCube, changeColor, screenPos, } from '../scripts/setup'
+import { GithubPicker } from 'react-color'
 
 
 
-const Gui = ({ scene }) => {
+const Gui = ({ scene, canvas }) => {
 
     const [selected, setSelected] = useState({})
+    const camera = scene.activeCamera
     const inputX = useRef(null)
     const inputY = useRef(null)
     const inputZ = useRef(null)
+    const startingPoint = useRef(null)
+    const currentMesh = useRef(null)
+    const [count, setCount]  = useState(0)
 
     useEffect(() => {
+
+
         scene.onPointerDown = (event, pickResult) => {
             if (pickResult.hit) {
                 console.log('Object clicked:', pickResult.pickedMesh.id)
                 if (event.inputIndex === 4) { //right click
                     console.log('clicked left on ', pickResult.pickedMesh.id)
                 }
-                if (event.inputIndex === 2 && pickResult.pickedMesh.id === "box") { //left click
+                if (event.inputIndex === 2 && pickResult.pickedMesh.id.includes("box")) { //left click
                     console.log('clicked right:', pickResult.pickedMesh.id)
                     if (!Object.entries(selected).length) {
                         setSelected(pickResult.pickedMesh)
                         highlight(pickResult.pickedMesh)
+                        pointerDown(pickResult.pickedMesh)
+                        mouseDownEvents()
                     }
                     else {
                         boxDeselected(selected)
                         setSelected(pickResult.pickedMesh)
                         highlight(pickResult.pickedMesh)
+
                     }
                 }
                 if (event.inputIndex === 2 &&
@@ -39,7 +48,63 @@ const Gui = ({ scene }) => {
                 }
             }
         }
-    }, [scene, selected])
+
+        const mouseDownEvents = () => {
+            scene.onPointerUp = () => {
+                pointerUp()
+            }
+            scene.onPointerMove = () => {
+                pointerMove()
+            }
+        }
+
+        const getGroundPosition = () => {
+            // var pickinfo = scene.pick(scene.pointerX, scene.pointerY,  (mesh) => { return mesh === scene.meshes.ground })
+            var pickinfo = scene.pick(scene.pointerX, scene.pointerY, 0)
+            if (pickinfo.hit) {
+                return pickinfo.pickedPoint
+            }
+
+            return null
+        }
+        //grab mesh and disconnect camera
+        const pointerDown = (mesh) => {
+            currentMesh.current = mesh
+            startingPoint.current = getGroundPosition()
+            if (startingPoint) { 
+                setTimeout(function () {
+                    camera.detachControl(canvas)
+                }, 0)
+            }
+        }
+
+        //reconnect camera
+        const pointerUp = () => {
+            if (startingPoint.current) {
+                camera.attachControl(canvas, true)
+                startingPoint.current = null
+                return
+            }
+        }
+
+        const pointerMove = () => {
+            if (!startingPoint.current) {
+                return
+            }
+           // var current = getGroundPosition()
+            if (!getGroundPosition()) {
+                return
+            }
+
+            let diff = getGroundPosition().subtract(startingPoint.current)
+            currentMesh.current.position.addInPlace(diff)
+            startingPoint.current = getGroundPosition()
+        }
+
+
+
+
+    }, [scene, selected, canvas, camera])
 
     const highlight = (box) => {
         box.material.wireframe = true
@@ -51,6 +116,8 @@ const Gui = ({ scene }) => {
     const destory = (box) => {
         box.dispose()
         setSelected({})
+        console.log(scene)
+        setCount(count - 1)
     }
 
 
@@ -70,10 +137,11 @@ const Gui = ({ scene }) => {
             changeColor(selected, color.hex)
         }
         console.log(color)
-    };
+    }
 
     const addCube = () => {
         createCube(mainColor)
+        setCount(count + 1)
     }
 
     return (
@@ -82,11 +150,12 @@ const Gui = ({ scene }) => {
                 className="button-87"
                 onClick={() => addCube()}
             >Cube +</button>
+            <h4>Object Count = {count}</h4>
             <div className="dimensions" style={Object.entries(selected).length ?
-                { visibility: "visible", top: screenPos(selected)[1] +80, left: screenPos(selected)[0] - 106 }
+                { visibility: "visible", top: screenPos(selected)[1] + 80, left: screenPos(selected)[0] - 106 }
                 : { visibility: "hidden" }}>
-                {/* <h2>{selected.id}
-                </h2> */}
+                <h2>{selected.id}
+                </h2>
 
                 <div>
                     <label htmlFor="inputX">X</label>

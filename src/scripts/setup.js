@@ -30,7 +30,7 @@ let shadowGenerator = {}
 let camera = {}
 
 
-const BabylonComponent = ({ babScene }) => {
+const BabylonComponent = ({ babScene, babCanvas }) => {
 
     //  let scene = {}
 
@@ -53,13 +53,13 @@ const BabylonComponent = ({ babScene }) => {
         // let light = new HemisphericLight("light1", new Vector3(0, 1, 1), scene)
         // light.intensity = 0.7
 
-        const light = new DirectionalLight("dir01", new Vector3(-1, -2, -1), scene);
-        light.position = new Vector3(20, 40, 20);
-        light.intensity = 1;
+        const light = new DirectionalLight("dir01", new Vector3(-1, -2, -1), scene)
+        light.position = new Vector3(20, 40, 20)
+        light.intensity = 1
         //shadows
-        shadowGenerator = new ShadowGenerator(1024, light);
+        shadowGenerator = new ShadowGenerator(1024, light)
 
-        shadowGenerator.useExponentialShadowMap = true;
+        shadowGenerator.useExponentialShadowMap = true
         //materials
         let pbr = new PBRMaterial()
         pbr.albedoColor = new Color3(1, 0.5, 0)
@@ -78,7 +78,7 @@ const BabylonComponent = ({ babScene }) => {
         // ground
         let ground = CreateGround("ground1", { width: 256, height: 256, subdivisions: 2 }, scene)
         ground.material = brown
-        ground.receiveShadows = true;
+        ground.receiveShadows = true
 
 
 
@@ -128,6 +128,7 @@ const BabylonComponent = ({ babScene }) => {
     //webGPU engine
     const createSceneGPU = async () => {
         const { current: canvas } = renderCanvas
+        babCanvas(renderCanvas)
         const engine = new WebGPUEngine(canvas)
         await engine.initAsync()
         sceneBuild(engine, canvas)
@@ -136,6 +137,7 @@ const BabylonComponent = ({ babScene }) => {
     //webGPU engine
     const createSceneWebGL = () => {
         const { current: canvas } = renderCanvas
+        babCanvas(renderCanvas)
         const engine = new Engine(canvas, true)
         sceneBuild(engine, canvas)
     }
@@ -208,9 +210,9 @@ const BabylonComponent = ({ babScene }) => {
 
     //  scene.onPointerDown = () => {console.log("clicked")}
     // //  function castRay(){
-    // //     var ray = scene.createPickingRay(scene.pointerX, scene.pointerY, Matrix.Identity(), camera, false);	
-    // //     var hit = scene.pickWithRay(ray);
-    // //     console.log("HIT!: " + hit);
+    // //     var ray = scene.createPickingRay(scene.pointerX, scene.pointerY, Matrix.Identity(), camera, false)	
+    // //     var hit = scene.pickWithRay(ray)
+    // //     console.log("HIT!: " + hit)
     // // }
 
     function loadMeshes(obj, path, filename, scene) {
@@ -245,16 +247,17 @@ const BabylonComponent = ({ babScene }) => {
 
 export default BabylonComponent
 
-
+export let counter = 0
 export const createCube = (color) => {
-    const box = MeshBuilder.CreateBox("box")
+    const box = MeshBuilder.CreateBox("box " + counter)
     let pbr = new PBRMaterial()
     pbr.albedoColor = Color3.FromHexString(color)
     pbr.metallic = 0.1
     pbr.roughness = 0.1
     box.material = pbr
     box.position = new Vector3(0, 0.5, 0)
-    shadowGenerator.addShadowCaster(box);
+    shadowGenerator.addShadowCaster(box)
+    counter++
     return box
 }
 
