@@ -18,6 +18,7 @@ import {
     CubeTexture,
     Texture,
     Space,
+    Matrix
 } from "@babylonjs/core"
 import "@babylonjs/loaders"
 
@@ -25,7 +26,8 @@ import "@babylonjs/loaders"
 const BabylonComponent = ({ hideflags }) => {
 
     let scene = {}
-    const [babylonObjects, setBabylonObjects] = useState([])
+    let camera ={}
+   // const [babylonObjects, setBabylonObjects] = useState([])
     const renderCanvas = useRef(null)
     const webGL = useRef(false)
     let resizeTimeout
@@ -37,7 +39,7 @@ const BabylonComponent = ({ hideflags }) => {
         scene = new Scene(engine)
 
         //camera
-        let camera = new ArcRotateCamera("camera", Tools.ToRadians(45), Tools.ToRadians(65), 10, Vector3.Zero(), scene)
+        camera = new ArcRotateCamera("camera", Tools.ToRadians(45), Tools.ToRadians(65), 10, Vector3.Zero(), scene)
         camera.setTarget(Vector3.Zero())
         camera.attachControl(canvas, true)
         //lights
@@ -55,9 +57,9 @@ const BabylonComponent = ({ hideflags }) => {
         brown.albedoColor = new Color3(0.7, 0.1, 0)
 
         //3d objects
-        let sphere = CreateSphere("sphere1", { segments: 16, diameter: 2 }, scene)
-        sphere.position.y = 2
-        sphere.material = pbr
+        // let sphere = CreateSphere("sphere1", { segments: 16, diameter: 2 }, scene)
+        // sphere.position.y = 2
+        // sphere.material = pbr
 
         // ground
         let ground = CreateGround("ground1", { width: 256, height: 256, subdivisions: 2 }, scene)
@@ -74,10 +76,10 @@ const BabylonComponent = ({ hideflags }) => {
         skybox.material = skyboxMaterial
 
         //custom mesh loading
-        let building = {}
-        loadMeshes(building, "./media/", "building.glb", scene)
+        // let building = {}
+        // loadMeshes(building, "./media/", "building.glb", scene)
 
-        setBabylonObjects([...babylonObjects, ground, camera, building])
+        // setBabylonObjects([...babylonObjects, ground, camera, building])
 
         //resize engine render on window resize release
         const handleResize = () => {
@@ -89,6 +91,13 @@ const BabylonComponent = ({ hideflags }) => {
             }, 200)
         }
         window.addEventListener('resize', handleResize)
+
+        scene.onPointerDown = (event, pickResult) => {
+            // pickResult is an object that contains information about the clicked object
+            if (pickResult.hit) {
+              console.log('Object clicked:', pickResult.pickedMesh)
+            }
+          }
 
         engine.runRenderLoop(() => {
             scene.render()
@@ -166,16 +175,26 @@ const BabylonComponent = ({ hideflags }) => {
             }
         }
 
+
     }, [])
 
+
+
     //show or hide meshes
-    if (babylonObjects[2]) {
-        let checkvalid = false //HACk had to check if each object are valid first, workaroud error
-        babylonObjects[2].Frame ? babylonObjects[2].Frame.isVisible = hideflags.frame : checkvalid = true
-        babylonObjects[2].windowsmesh ? babylonObjects[2].windowsmesh.isVisible = hideflags.window : checkvalid = true
-        babylonObjects[2].door ? babylonObjects[2].door.isVisible = hideflags.door : checkvalid = true
-        babylonObjects[2].Wall ? babylonObjects[2].Wall.isVisible = hideflags.wall : checkvalid = true
-    }
+    // if (babylonObjects[2]) {
+    //     let checkvalid = false //HACk had to check if each object are valid first, workaroud error
+    //     babylonObjects[2].Frame ? babylonObjects[2].Frame.isVisible = hideflags.frame : checkvalid = true
+    //     babylonObjects[2].windowsmesh ? babylonObjects[2].windowsmesh.isVisible = hideflags.window : checkvalid = true
+    //     babylonObjects[2].door ? babylonObjects[2].door.isVisible = hideflags.door : checkvalid = true
+    //     babylonObjects[2].Wall ? babylonObjects[2].Wall.isVisible = hideflags.wall : checkvalid = true
+    // }
+
+    //  scene.onPointerDown = () => {console.log("clicked")}
+    // //  function castRay(){
+    // //     var ray = scene.createPickingRay(scene.pointerX, scene.pointerY, Matrix.Identity(), camera, false);	
+    // //     var hit = scene.pickWithRay(ray);
+    // //     console.log("HIT!: " + hit);
+    // // }
 
     function loadMeshes(obj, path, filename, scene) {
         // obj.file = await SceneLoader.AppendAsync("")
@@ -211,4 +230,14 @@ export default BabylonComponent
 
 
 
+export const createCube = (color) =>{
+    const box = MeshBuilder.CreateBox("box")
+    let pbr = new PBRMaterial()
+    pbr.albedoColor = Color3.FromHexString(color)
+    pbr.metallic = 0.1
+    pbr.roughness = 0.1
+    box.material = pbr
+    box.position = new Vector3(0,1,0)
+    return box
+}
 
