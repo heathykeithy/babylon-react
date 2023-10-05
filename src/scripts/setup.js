@@ -18,15 +18,22 @@ import {
     CubeTexture,
     Texture,
     Space,
-    Matrix
+    Matrix,
+    ShadowGenerator,
+    DirectionalLight
 } from "@babylonjs/core"
 import "@babylonjs/loaders"
 
 
-const BabylonComponent = ({ hideflags }) => {
-
-    let scene = {}
+let scene = {}
+let shadowGenerator = {}
     let camera ={}
+
+
+const BabylonComponent = ( {babScene} ) => {
+
+  //  let scene = {}
+  
    // const [babylonObjects, setBabylonObjects] = useState([])
     const renderCanvas = useRef(null)
     const webGL = useRef(false)
@@ -37,15 +44,22 @@ const BabylonComponent = ({ hideflags }) => {
     const sceneBuild = (engine, canvas) => {
         //scene
         scene = new Scene(engine)
-
+        babScene(scene)
         //camera
         camera = new ArcRotateCamera("camera", Tools.ToRadians(45), Tools.ToRadians(65), 10, Vector3.Zero(), scene)
         camera.setTarget(Vector3.Zero())
         camera.attachControl(canvas, true)
         //lights
-        let light = new HemisphericLight("light1", new Vector3(0, 1, 1), scene)
-        light.intensity = 0.7
+        // let light = new HemisphericLight("light1", new Vector3(0, 1, 1), scene)
+        // light.intensity = 0.7
 
+        const light = new DirectionalLight("dir01", new Vector3(-1, -2, -1), scene);
+        light.position = new Vector3(20, 40, 20);
+        light.intensity = 0.5;
+        //shadows
+        shadowGenerator = new ShadowGenerator(1024, light);
+        
+        shadowGenerator.useExponentialShadowMap = true;
         //materials
         let pbr = new PBRMaterial()
         pbr.albedoColor = new Color3(1, 0.5, 0)
@@ -64,6 +78,9 @@ const BabylonComponent = ({ hideflags }) => {
         // ground
         let ground = CreateGround("ground1", { width: 256, height: 256, subdivisions: 2 }, scene)
         ground.material = brown
+        ground.receiveShadows = true;
+
+
 
         //environment 
         const skybox = MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene)
@@ -92,12 +109,12 @@ const BabylonComponent = ({ hideflags }) => {
         }
         window.addEventListener('resize', handleResize)
 
-        scene.onPointerDown = (event, pickResult) => {
-            // pickResult is an object that contains information about the clicked object
-            if (pickResult.hit) {
-              console.log('Object clicked:', pickResult.pickedMesh)
-            }
-          }
+        // scene.onPointerDown = (event, pickResult) => {
+        //     // pickResult is an object that contains information about the clicked object
+        //     if (pickResult.hit) {
+        //       console.log('Object clicked:', pickResult.pickedMesh.id)
+        //     }
+        //   }
 
         engine.runRenderLoop(() => {
             scene.render()
@@ -229,7 +246,6 @@ const BabylonComponent = ({ hideflags }) => {
 export default BabylonComponent
 
 
-
 export const createCube = (color) =>{
     const box = MeshBuilder.CreateBox("box")
     let pbr = new PBRMaterial()
@@ -237,7 +253,9 @@ export const createCube = (color) =>{
     pbr.metallic = 0.1
     pbr.roughness = 0.1
     box.material = pbr
-    box.position = new Vector3(0,1,0)
+    box.position = new Vector3(0,0.5,0)
+    shadowGenerator.addShadowCaster(box);
     return box
 }
+
 

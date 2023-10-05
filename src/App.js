@@ -12,8 +12,11 @@ import Gui from './components/gui';
 //         "door": true,
 //         "wall": true
 //     })
+const [scene,setScene] = useState({})
 
-
+    const handleBabscene = (data) =>{
+        setScene(data)
+    }
     // const clickHandler = useCallback((key) => {
     //     setShowHide(prevState => ({
     //       ...prevState,
@@ -23,8 +26,8 @@ import Gui from './components/gui';
 
     return (
         <div className="App">
-            <Gui ></Gui>
-            <BabylonComponent >
+            <Gui scene={scene}></Gui>
+            <BabylonComponent babScene={handleBabscene}>
             </BabylonComponent>
         </div>
     );
