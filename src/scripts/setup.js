@@ -27,14 +27,14 @@ import "@babylonjs/loaders"
 
 let scene = {}
 let shadowGenerator = {}
-    let camera ={}
+let camera = {}
 
 
-const BabylonComponent = ( {babScene} ) => {
+const BabylonComponent = ({ babScene }) => {
 
-  //  let scene = {}
-  
-   // const [babylonObjects, setBabylonObjects] = useState([])
+    //  let scene = {}
+
+    // const [babylonObjects, setBabylonObjects] = useState([])
     const renderCanvas = useRef(null)
     const webGL = useRef(false)
     let resizeTimeout
@@ -55,10 +55,10 @@ const BabylonComponent = ( {babScene} ) => {
 
         const light = new DirectionalLight("dir01", new Vector3(-1, -2, -1), scene);
         light.position = new Vector3(20, 40, 20);
-        light.intensity = 0.8;
+        light.intensity = 1;
         //shadows
         shadowGenerator = new ShadowGenerator(1024, light);
-        
+
         shadowGenerator.useExponentialShadowMap = true;
         //materials
         let pbr = new PBRMaterial()
@@ -145,10 +145,10 @@ const BabylonComponent = ( {babScene} ) => {
 
         let userAgent = navigator.userAgent
         if (
-            (userAgent.includes("CriOS")) || 
+            (userAgent.includes("CriOS")) ||
             userAgent.includes("Android") ||
             userAgent.includes("SamsungBrowser") ||
-            userAgent.includes("iPhone") 
+            userAgent.includes("iPhone")
 
         ) {
             return false
@@ -246,20 +246,40 @@ const BabylonComponent = ( {babScene} ) => {
 export default BabylonComponent
 
 
-export const createCube = (color) =>{
+export const createCube = (color) => {
     const box = MeshBuilder.CreateBox("box")
     let pbr = new PBRMaterial()
     pbr.albedoColor = Color3.FromHexString(color)
     pbr.metallic = 0.1
     pbr.roughness = 0.1
     box.material = pbr
-    box.position = new Vector3(0,0.5,0)
+    box.position = new Vector3(0, 0.5, 0)
     shadowGenerator.addShadowCaster(box);
     return box
 }
 
-export const changeColor = (box, color) =>{
+export const changeColor = (box, color) => {
     box.material.albedoColor = Color3.FromHexString(color)
 }
+
+// export const screenPos = (box) => {
+//     const screenPosition = Vector3.Project(box.getAbsolutePosition(),
+//         Matrix.Identity(),
+//         scene.getTransformMatrix(),
+//         scene.activeCamera.viewport.toGlobal(scene.getEngine()))
+//     return screenPosition
+// }
+
+export const screenPos = (box) => {
+    const screenPosition = Vector3.Project(box.position,
+        Matrix.Identity(),
+        scene.getTransformMatrix(),
+        scene.activeCamera.viewport.toGlobal(scene.getEngine().getRenderWidth(),
+         scene.getEngine().getRenderHeight()))
+         const xy = [screenPosition.x, screenPosition.y]
+    return xy
+}
+
+
 
 

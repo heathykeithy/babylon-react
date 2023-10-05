@@ -95,3 +95,51 @@ body {
 .button-87:active {
     transform: scale(0.95);
 }
+
+.dimensions {
+    position: absolute;
+    /* top: 10px;  */
+    /* left: 10px;  */
+    background-color: #ffffff00;
+    border: 1px solid #ddd;
+    opacity: 70%;
+    padding: 10px;
+    box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.2);
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #ffffff;
+  }
+  
+  .dimensions h2 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .dimensions label {
+    margin-bottom: 5px;
+    margin-right: 5px;
+    margin-left: 5px;
+  }
+  
+  .dimensions input[type="number"] {
+    width: 37px;
+    padding: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .dimensions button {
+    background-color: #4CAF50;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 5px;
+  }
+  
+  .dimensions button:hover {
+    background-color: #45a049;
+  }

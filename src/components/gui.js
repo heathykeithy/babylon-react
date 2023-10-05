@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { createCube, changeColor } from '../scripts/setup'
+import React, { useState, useEffect, useRef } from 'react'
+import { createCube, changeColor, screenPos } from '../scripts/setup'
 import { GithubPicker } from 'react-color';
 
 
@@ -7,6 +7,9 @@ import { GithubPicker } from 'react-color';
 const Gui = ({ scene }) => {
 
     const [selected, setSelected] = useState({})
+    const inputX = useRef(null)
+    const inputY = useRef(null)
+    const inputZ = useRef(null)
 
     useEffect(() => {
         scene.onPointerDown = (event, pickResult) => {
@@ -32,6 +35,7 @@ const Gui = ({ scene }) => {
                     pickResult.pickedMesh.id !== "box" &&
                     Object.entries(selected).length) {
                     boxDeselected(selected)
+                    setSelected({})
                 }
             }
         }
@@ -50,9 +54,9 @@ const Gui = ({ scene }) => {
     }
 
 
-    const scale = (box, axis, value) =>{
+    const scale = (box, axis, value) => {
         box.scaling[axis] = value
-        if(axis === 'y'){
+        if (axis === 'y') {
             box.position.y = value / 2 //keep box on the ground
         }
     }
@@ -62,7 +66,7 @@ const Gui = ({ scene }) => {
 
     const handleChangeComplete = (color) => {
         setMainColor(color.hex)
-        if(Object.entries(selected).length){
+        if (Object.entries(selected).length) {
             changeColor(selected, color.hex)
         }
         console.log(color)
@@ -78,21 +82,28 @@ const Gui = ({ scene }) => {
                 className="button-87"
                 onClick={() => addCube()}
             >Cube +</button>
-            <div className="dimensions" style={Object.entries(selected).length ? { visibility: "visible" } : { visibility: "hidden" }}>
-                <h1>{selected.id}
-                </h1>
-               
+            <div className="dimensions" style={Object.entries(selected).length ?
+                { visibility: "visible", top: screenPos(selected)[1] +80, left: screenPos(selected)[0] - 106 }
+                : { visibility: "hidden" }}>
+                {/* <h2>{selected.id}
+                </h2> */}
+
+                <div>
                     <label htmlFor="inputX">X</label>
-                    <input id="inputX" type='number' aria-label='X' onChange={(e) => scale(selected, 'x', e.target.value)}></input>
+                    <input id="inputX" type='number'
+                        placeholder={Object.entries(selected).length ? selected.scaling.x : 0}
+                        ref={inputX} aria-label='X' onChange={(e) => scale(selected, 'x', e.target.value)}></input>
                     <label htmlFor="inputY">Y</label>
-                    <input id="inputY" type='number' aria-label='Y' onChange={(e) => scale(selected, 'y', e.target.value)}></input>
+                    <input id="inputY" type='number'
+                        placeholder={Object.entries(selected).length ? selected.scaling.y : 0}
+                        ref={inputY} aria-label='Y' onChange={(e) => scale(selected, 'y', e.target.value)}></input>
                     <label htmlFor="inputZ">Z</label>
-                    <input id="inputZ" type='number' aria-label='Z' onChange={(e) => scale(selected, 'z', e.target.value)}></input>
-              
-
-                <GithubPicker onChangeComplete={handleChangeComplete}  >
-
-                </GithubPicker>
+                    <input id="inputZ" type='number'
+                        placeholder={Object.entries(selected).length ? selected.scaling.z : 0}
+                        ref={inputZ} aria-label='Z' onChange={(e) => scale(selected, 'z', e.target.value)}></input>
+                </div>
+                <GithubPicker triangle='hide' onChangeComplete={handleChangeComplete}  >
+                </GithubPicker     >
                 <button onClick={() => destory(selected)}
                 >Delete</button>
             </div>
