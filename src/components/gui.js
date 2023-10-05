@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { createCube } from '../scripts/setup'
+import { createCube, changeColor } from '../scripts/setup'
 import { GithubPicker } from 'react-color';
 
 
@@ -31,7 +31,7 @@ const Gui = ({ scene }) => {
                     pickResult.pickedMesh.id &&
                     pickResult.pickedMesh.id !== "box" &&
                     Object.entries(selected).length) {
-                        boxDeselected(selected)
+                    boxDeselected(selected)
                 }
             }
         }
@@ -44,17 +44,27 @@ const Gui = ({ scene }) => {
         box.material.wireframe = false
     }
 
-    const destory = (selected) =>{
-        selected.dispose()
+    const destory = (box) => {
+        box.dispose()
+        setSelected({})
     }
 
-    //TODO on click on box make material wireframe
-    //click off the box revert color
+
+    const scale = (box, axis, value) =>{
+        box.scaling[axis] = value
+        if(axis === 'y'){
+            box.position.y = value / 2 //keep box on the ground
+        }
+    }
+
 
     const [mainColor, setMainColor] = useState("#1273de")
 
     const handleChangeComplete = (color) => {
         setMainColor(color.hex)
+        if(Object.entries(selected).length){
+            changeColor(selected, color.hex)
+        }
         console.log(color)
     };
 
@@ -68,15 +78,18 @@ const Gui = ({ scene }) => {
                 className="button-87"
                 onClick={() => addCube()}
             >Cube +</button>
-            <div className="dimensions" style={Object.entries(selected).length? {visibility: "visible"}: {visibility: "hidden"}}>
+            <div className="dimensions" style={Object.entries(selected).length ? { visibility: "visible" } : { visibility: "hidden" }}>
                 <h1>{selected.id}
                 </h1>
-                <label htmlFor="inputX">X</label>
-                <input id="inputX" type='number' aria-label='X'></input>
-                <label htmlFor="inputY">Y</label>
-                <input id="inputY" type='number' aria-label='Y'></input>
-                <label htmlFor="inputZ">Z</label>
-                <input id="inputZ" type='number' aria-label='Z'></input>
+               
+                    <label htmlFor="inputX">X</label>
+                    <input id="inputX" type='number' aria-label='X' onChange={(e) => scale(selected, 'x', e.target.value)}></input>
+                    <label htmlFor="inputY">Y</label>
+                    <input id="inputY" type='number' aria-label='Y' onChange={(e) => scale(selected, 'y', e.target.value)}></input>
+                    <label htmlFor="inputZ">Z</label>
+                    <input id="inputZ" type='number' aria-label='Z' onChange={(e) => scale(selected, 'z', e.target.value)}></input>
+              
+
                 <GithubPicker onChangeComplete={handleChangeComplete}  >
 
                 </GithubPicker>

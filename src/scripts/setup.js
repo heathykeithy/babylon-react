@@ -55,7 +55,7 @@ const BabylonComponent = ( {babScene} ) => {
 
         const light = new DirectionalLight("dir01", new Vector3(-1, -2, -1), scene);
         light.position = new Vector3(20, 40, 20);
-        light.intensity = 0.5;
+        light.intensity = 0.8;
         //shadows
         shadowGenerator = new ShadowGenerator(1024, light);
         
@@ -256,6 +256,10 @@ export const createCube = (color) =>{
     box.position = new Vector3(0,0.5,0)
     shadowGenerator.addShadowCaster(box);
     return box
+}
+
+export const changeColor = (box, color) =>{
+    box.material.albedoColor = Color3.FromHexString(color)
 }
 
 
