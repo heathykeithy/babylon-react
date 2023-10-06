@@ -30,6 +30,12 @@ let shadowGenerator = {}
 let camera = {}
 
 
+/**
+ * 
+ * @param {object} scene prop to partent 
+ * @param {object} canvas prop to partent 
+ * @returns 
+ */
 const BabylonComponent = ({ babScene, babCanvas }) => {
 
     //  let scene = {}
@@ -248,30 +254,30 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
 export default BabylonComponent
 
 export let counter = 0
-export const createCube = (color) => {
+export const createCube = (color, clone) => {
     const box = MeshBuilder.CreateBox("box " + counter)
     let pbr = new PBRMaterial()
-    pbr.albedoColor = Color3.FromHexString(color)
+    if(clone){
+        box.scaling = clone.scaling
+        pbr.albedoColor = color
+    }
+    else{
+        pbr.albedoColor = Color3.FromHexString(color)
+    }    
     pbr.metallic = 0.1
     pbr.roughness = 0.1
     box.material = pbr
-    box.position = new Vector3(0, 0.5, 0)
+    box.position = new Vector3(0, box.scaling.y/2, 0)
     shadowGenerator.addShadowCaster(box)
     counter++
     return box
 }
 
+
 export const changeColor = (box, color) => {
     box.material.albedoColor = Color3.FromHexString(color)
 }
 
-// export const screenPos = (box) => {
-//     const screenPosition = Vector3.Project(box.getAbsolutePosition(),
-//         Matrix.Identity(),
-//         scene.getTransformMatrix(),
-//         scene.activeCamera.viewport.toGlobal(scene.getEngine()))
-//     return screenPosition
-// }
 
 export const screenPos = (box) => {
     const screenPosition = Vector3.Project(box.position,

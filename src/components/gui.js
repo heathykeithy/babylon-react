@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { createCube, changeColor, screenPos, } from '../scripts/setup'
 import { GithubPicker } from 'react-color'
+import { lerp } from './lerp'
 
 
+
+
+/**
+ * Handle UI and mouse interactions
+ * @param {object} scene from parent 
+ * @param {object} canvas from parent 
+ * @returns 
+ */
 
 const Gui = ({ scene, canvas }) => {
 
@@ -13,10 +22,9 @@ const Gui = ({ scene, canvas }) => {
     const inputZ = useRef(null)
     const startingPoint = useRef(null)
     const currentMesh = useRef(null)
-    const [count, setCount]  = useState(0)
+    const [count, setCount] = useState(0)
 
     useEffect(() => {
-
 
         scene.onPointerDown = (event, pickResult) => {
             if (pickResult.hit) {
@@ -26,10 +34,12 @@ const Gui = ({ scene, canvas }) => {
                 }
                 if (event.inputIndex === 2 && pickResult.pickedMesh.id.includes("box")) { //left click
                     console.log('clicked right:', pickResult.pickedMesh.id)
-                    if (!Object.entries(selected).length) {
+                    if (!Object.entries(selected).length && selected !== pickResult.pickedMesh) {
+                        clearInputs()
                         setSelected(pickResult.pickedMesh)
                         highlight(pickResult.pickedMesh)
                         pointerDown(pickResult.pickedMesh)
+
                         mouseDownEvents()
                     }
                     else {
@@ -59,19 +69,18 @@ const Gui = ({ scene, canvas }) => {
         }
 
         const getGroundPosition = () => {
-            // var pickinfo = scene.pick(scene.pointerX, scene.pointerY,  (mesh) => { return mesh === scene.meshes.ground })
             var pickinfo = scene.pick(scene.pointerX, scene.pointerY, 0)
             if (pickinfo.hit) {
                 return pickinfo.pickedPoint
             }
-
             return null
         }
+
         //grab mesh and disconnect camera
         const pointerDown = (mesh) => {
             currentMesh.current = mesh
             startingPoint.current = getGroundPosition()
-            if (startingPoint) { 
+            if (startingPoint) {
                 setTimeout(function () {
                     camera.detachControl(canvas)
                 }, 0)
@@ -87,11 +96,11 @@ const Gui = ({ scene, canvas }) => {
             }
         }
 
+        //drag box
         const pointerMove = () => {
             if (!startingPoint.current) {
                 return
             }
-           // var current = getGroundPosition()
             if (!getGroundPosition()) {
                 return
             }
@@ -101,16 +110,22 @@ const Gui = ({ scene, canvas }) => {
             startingPoint.current = getGroundPosition()
         }
 
-
-
-
     }, [scene, selected, canvas, camera])
 
     const highlight = (box) => {
         box.material.wireframe = true
     }
+
+
+    const clearInputs = () => {
+        document.querySelector('#inputX').value = ''
+        document.querySelector('#inputY').value = ''
+        document.querySelector('#inputZ').value = ''
+    }
+
     const boxDeselected = (box) => {
         box.material.wireframe = false
+        //TODO deselect all function
     }
 
     const destory = (box) => {
@@ -120,14 +135,27 @@ const Gui = ({ scene, canvas }) => {
         setCount(count - 1)
     }
 
+ 
 
-    const scale = (box, axis, value) => {
-        box.scaling[axis] = value
+    const [scaleX, setScaleX] = useState('')
+    const [scaleY, setScaleY] = useState('')
+    const [scaleZ, setScaleZ] = useState('')
+
+    const scale = (axis, value) => {
+        // box.scaling[axis] = lerp(box.scaling[axis], value, 1000)
+
+        if (parseFloat(value) === '') {
+            value = 0.1
+            axis === 'x' ? setScaleX(value) :
+                axis === 'y' ? setScaleY(value) :
+                    axis === 'z' ? setScaleZ(value) :
+                        value = null
+        }
+        selected.scaling[axis] = value
         if (axis === 'y') {
-            box.position.y = value / 2 //keep box on the ground
+            selected.position.y = value / 2 //keep box on the ground
         }
     }
-
 
     const [mainColor, setMainColor] = useState("#1273de")
 
@@ -136,14 +164,17 @@ const Gui = ({ scene, canvas }) => {
         if (Object.entries(selected).length) {
             changeColor(selected, color.hex)
         }
-        console.log(color)
     }
 
     const addCube = () => {
         createCube(mainColor)
         setCount(count + 1)
     }
-
+   const cloneObject = (box) => {
+        const color = box.material.albedoColor
+        createCube(color, box) 
+        setCount(count + 1)
+    }
     return (
         <div className="gui">
             <button
@@ -160,21 +191,36 @@ const Gui = ({ scene, canvas }) => {
                 <div>
                     <label htmlFor="inputX">X</label>
                     <input id="inputX" type='number'
-                        placeholder={Object.entries(selected).length ? selected.scaling.x : 0}
-                        ref={inputX} aria-label='X' onChange={(e) => scale(selected, 'x', e.target.value)}></input>
+                        placeholder={Object.entries(selected).length ? selected.scaling.x : 1}
+                        //  placeholder={scaleX}
+                        // value={()=> {if(Object.entries(selected).length  && xFocus === false){return selected.scaling.x}}}
+                        //value={scaleX}
+                        ref={inputX} aria-label='X'
+                        onChange={(e) => scale('x', e.target.value)}
+                    >
+                    </input>
                     <label htmlFor="inputY">Y</label>
                     <input id="inputY" type='number'
-                        placeholder={Object.entries(selected).length ? selected.scaling.y : 0}
-                        ref={inputY} aria-label='Y' onChange={(e) => scale(selected, 'y', e.target.value)}></input>
+                        placeholder={Object.entries(selected).length ? selected.scaling.y : 1}
+                        //placeholder={scaleY}
+                        ref={inputY} aria-label='Y' onChange={(e) => scale('y', e.target.value)}
+                    //value={scaleY}
+                    >
+                    </input>
                     <label htmlFor="inputZ">Z</label>
                     <input id="inputZ" type='number'
-                        placeholder={Object.entries(selected).length ? selected.scaling.z : 0}
-                        ref={inputZ} aria-label='Z' onChange={(e) => scale(selected, 'z', e.target.value)}></input>
+                        placeholder={Object.entries(selected).length ? selected.scaling.z : 1}
+                        //placeholder={scaleZ}
+                        ref={inputZ} aria-label='Z' onChange={(e) => scale('z', e.target.value)}
+                    //value={scaleZ}
+                    ></input>
                 </div>
                 <GithubPicker triangle='hide' onChangeComplete={handleChangeComplete}  >
                 </GithubPicker     >
                 <button onClick={() => destory(selected)}
                 >Delete</button>
+                <button onClick={() => cloneObject(selected)}
+                >Copy</button>
             </div>
 
         </div>
