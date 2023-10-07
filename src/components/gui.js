@@ -30,41 +30,34 @@ const Gui = ({ scene, canvas }) => {
             if (pickResult.hit) {
                 console.log('Object clicked:', pickResult.pickedMesh.id)
                 if (event.inputIndex === 4) { //right click
-                    console.log('clicked left on ', pickResult.pickedMesh.id)
+                    //not used
                 }
                 if (event.inputIndex === 2 && pickResult.pickedMesh.id.includes("box")) { //left click
-                    if(!Object.entries(selected).length){
+                    //nothing selected
+                    if (!Object.entries(selected).length) {
                         setSelected(pickResult.pickedMesh)
                         highlight(pickResult.pickedMesh)
-                        return
                     }
-                    if (selected.id !== pickResult.pickedMesh.id) {
-                        clearInputs()
-                        boxDeselected(selected)
-                        setSelected(pickResult.pickedMesh)
-                        highlight(pickResult.pickedMesh)
+                    else {//select new box to replace selected
+                        if (selected.id !== pickResult.pickedMesh.id) {
+                            clearInputs()
+                            boxDeselected(selected)
+                            setSelected(pickResult.pickedMesh)
+                            highlight(pickResult.pickedMesh)
+                        }
+                        //clicking on already selected
                         //get face
                         console.log(pickResult.faceId) //TODO add face changing
-                    }
-                    else {
-                        boxDeselected(selected)
-                        //setSelected({})
-                        setSelected(pickResult.pickedMesh)
-                        highlight(pickResult.pickedMesh)
                     }
                     pointerDown(pickResult.pickedMesh)
                     mouseDownEvents()
                 }
-                if (event.inputIndex === 2 &&
-                    pickResult.pickedMesh.id &&
-                    !pickResult.pickedMesh.id.includes("box") &&
-                    Object.entries(selected).length) {
-                    boxDeselected(selected)
-                    setSelected({})
+                else { //if click off a box, deselect
+                    if (Object.entries(selected).length) {
+                        clearInputs()
+                        boxDeselected(selected)
+                    }
                 }
-
-
-                //TODO if box is seleceted and pick another box
             }
         }
 
@@ -101,6 +94,11 @@ const Gui = ({ scene, canvas }) => {
             if (startingPoint.current) {
                 camera.attachControl(canvas, true)
                 startingPoint.current = null
+                // if (selected.position.y < selected.scaling.y / 2) {
+                //     selected.position = new Vector3(selected.position.x,
+                //         selected.scaling.y / 2,
+                //         selected.position.z)
+                // }
                 return
             }
         }
@@ -222,6 +220,7 @@ const Gui = ({ scene, canvas }) => {
                 <button onClick={() => cloneObject(selected)}
                 >Copy</button>
             </div>
+
 
         </div>
     )

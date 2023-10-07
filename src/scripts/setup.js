@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import star from '../assets/solidStar.png'
+import sun from '../assets/sun.png'
 
 
 import {
@@ -23,7 +24,9 @@ import {
     ShadowGenerator,
     DirectionalLight,
     Animation,
-    ParticleSystem
+    ParticleSystem,
+    VolumetricLightScatteringPostProcess,
+    SSAORenderingPipeline
 } from "@babylonjs/core"
 import "@babylonjs/loaders"
 
@@ -31,6 +34,7 @@ import "@babylonjs/loaders"
 let scene = {}
 let shadowGenerator = {}
 let camera = {}
+let ssao = {}
 
 
 /**
@@ -59,17 +63,37 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         camera = new ArcRotateCamera("camera", Tools.ToRadians(45), Tools.ToRadians(65), 10, Vector3.Zero(), scene)
         camera.setTarget(Vector3.Zero())
         camera.attachControl(canvas, true)
-        //lights
-        // let light = new HemisphericLight("light1", new Vector3(0, 1, 1), scene)
-        // light.intensity = 0.7
 
-        const light = new DirectionalLight("dir01", new Vector3(-1, -2, -1), scene)
-        light.position = new Vector3(20, 40, 20)
+
+        //lights
+        const light = new DirectionalLight("dir01", new Vector3(-1, -2, 1), scene)
+
+        light.position = new Vector3(60, 130, -65)
         light.intensity = 1
+        window.sun = light
+        //volumetrics
+        const rays = new VolumetricLightScatteringPostProcess('rays', 1.0, camera, null, 100, Texture.BILINEAR_SAMPLINGMODE, engine, false)
+        rays.mesh.material.diffuseTexture = new Texture(sun, scene, true, false, Texture.BILINEAR_SAMPLINGMODE)
+        rays.mesh.material.diffuseTexture.hasAlpha = true
+        // rays.mesh.position = new Vector3(-150, 150, 150)
+        rays.mesh.scaling = new Vector3(30, 30, 30)
+        rays.mesh.position = light.position
+
+        let ssaoRatio = { ssaoRatio: 0.5, combineRatio: 1.0 }
+        ssao = new SSAORenderingPipeline("ssao", scene, ssaoRatio)
+        ssao.fallOff = 0.000001
+        ssao.area = 1
+        ssao.radius = 0.0001
+        ssao.totalStrength = 1.0
+        ssao.base = 0.5
+
+        // Attach camera to the SSAO render pipeline
+        scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssao", camera)
+
         //shadows
         shadowGenerator = new ShadowGenerator(1024, light)
-
         shadowGenerator.useExponentialShadowMap = true
+
         //materials
         let pbr = new PBRMaterial()
         pbr.albedoColor = new Color3(1, 0.5, 0)
@@ -87,11 +111,9 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
 
         // ground
         let ground = CreateGround("ground1", { width: 256, height: 256, subdivisions: 16 }, scene)
-        ground.position = new Vector3(0,-0.01,0)
+        ground.position = new Vector3(0, -0.01, 0)
         ground.material = brown
         ground.receiveShadows = true
-
-
 
         //environment 
         const skybox = MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene)
@@ -244,6 +266,21 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         })
     }
 
+    const [vol, setVol] = useState(true)
+
+    const volumetricsHandler = () => {
+        setVol(!vol)
+        if (vol) {
+            scene.postProcessRenderPipelineManager.enableEffectInPipeline("ssao", ssao.SSAOCombineRenderEffect, camera)
+        }
+        else{
+            scene.postProcessRenderPipelineManager.detachCamerasFromRenderPipeline("ssao", camera)
+        }
+    }
+    const AOHandler = () => {
+
+    }
+
     return (
         <div>
             <canvas
@@ -251,6 +288,16 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
                 id="renderCanvas"
             >
             </canvas>
+            <div className='settings'>
+                <button className='button-87'
+             
+                    onClick={volumetricsHandler}
+                >Volumetric Lighting</button>
+                <button className='button-87'
+                    
+                    onClick={AOHandler}
+                >Ambient Occlusion</button>
+            </div>
             <p id="renderType">{webGL.current ? "Browser or GPU not supported, falling back to WebGL from WebGPU" : "Running on WebGPU"}</p>
         </div>
     )
@@ -262,25 +309,25 @@ export let counter = 0
 export const createCube = (color, clone) => {
     const box = MeshBuilder.CreateBox("box " + counter)
     let pbr = new PBRMaterial()
-    if(clone){
-      //  box.scaling = clone.scaling //this does not work, it copies the object not the values
-        // for (let i= 0; i <  box.scaling.length; i++){
+    if (clone) {
+        //  box.scaling = clone.scaling //this does not work, it copies the object not the values
+        // for (let i= 0 i <  box.scaling.length i++){
         //     box.scaling[i] = clone.scaling[i]
         // }
         // box.scaling.x = clone.scaling.x
         // box.scaling.y = clone.scaling.y
         // box.scaling.z = clone.scaling.z
-        const { x, y, z } = clone.scaling;
-        box.scaling = new Vector3(x, y, z);
+        const { x, y, z } = clone.scaling
+        box.scaling = new Vector3(x, y, z)
         pbr.albedoColor = color
     }
-    else{
+    else {
         pbr.albedoColor = Color3.FromHexString(color)
-    }    
+    }
     pbr.metallic = 0.1
     pbr.roughness = 0.1
     box.material = pbr
-    box.position = new Vector3(0, box.scaling.y/2, 0)
+    box.position = new Vector3(0, box.scaling.y / 2, 0)
     shadowGenerator.addShadowCaster(box)
     box.enableEdgesRendering()
     box.edgesWidth = 4.0
@@ -301,43 +348,43 @@ export const screenPos = (box) => {
         Matrix.Identity(),
         scene.getTransformMatrix(),
         scene.activeCamera.viewport.toGlobal(scene.getEngine().getRenderWidth(),
-         scene.getEngine().getRenderHeight()))
-         const xy = [screenPosition.x, screenPosition.y]
+            scene.getEngine().getRenderHeight()))
+    const xy = [screenPosition.x, screenPosition.y]
     return xy
 }
 
 
-export const scaleAnimation = (box, axis, start , end)  =>{
-    const lerpscaling = new Animation("lerpscaling", axis, 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CONSTANT);
-    const keyFrames = []; 
+export const scaleAnimation = (box, axis, start, end) => {
+    const lerpscaling = new Animation("lerpscaling", axis, 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CONSTANT)
+    const keyFrames = []
     keyFrames.push({
         frame: 0,
         value: parseFloat(start) //start value
-    });
-        keyFrames.push({
+    })
+    keyFrames.push({
         frame: 10,
         value: parseFloat(end) //end value
-    });
-    lerpscaling.setKeys(keyFrames); 
-    box.animations.push(lerpscaling); //pass in object
-    scene.beginAnimation(box, 0, 2 * 30, true);
+    })
+    lerpscaling.setKeys(keyFrames)
+    box.animations.push(lerpscaling) //pass in object
+    scene.beginAnimation(box, 0, 2 * 30, true)
 }
 
-const puff =() =>{ 
-    let particleSystem = new ParticleSystem("stars", 1000, scene);
-    particleSystem.particleTexture = new  Texture(star, scene);
-    particleSystem.createPointEmitter(new Vector3(-1, 0, -1), new Vector3(1, 0.2, 1));
-    particleSystem.color1 = new Color4(0.51, 0.13, 0.13);
-    particleSystem.color2 = new Color4(1, 1, 1, 0);
-    particleSystem.colorDead = new Color4(1, 1, 1, 0);
-    particleSystem.emitRate = 6000;
-    particleSystem.minEmitPower = 1;
-    particleSystem.maxEmitPower = 20;
-    particleSystem.addStartSizeGradient(1, 0.1);
-    particleSystem.minAngularSpeed = 0;
-    particleSystem.maxAngularSpeed = 1;
-    particleSystem.addDragGradient(0,0.7,0.7);
+const puff = () => {
+    let particleSystem = new ParticleSystem("stars", 1000, scene)
+    particleSystem.particleTexture = new Texture(star, scene)
+    particleSystem.createPointEmitter(new Vector3(-1, 0, -1), new Vector3(1, 0.2, 1))
+    particleSystem.color1 = new Color4(0.51, 0.13, 0.13)
+    particleSystem.color2 = new Color4(1, 1, 1, 0)
+    particleSystem.colorDead = new Color4(1, 1, 1, 0)
+    particleSystem.emitRate = 6000
+    particleSystem.minEmitPower = 1
+    particleSystem.maxEmitPower = 20
+    particleSystem.addStartSizeGradient(1, 0.1)
+    particleSystem.minAngularSpeed = 0
+    particleSystem.maxAngularSpeed = 1
+    particleSystem.addDragGradient(0, 0.7, 0.7)
     particleSystem.maxLifeTime = 0.001
-    particleSystem.targetStopDuration = 0.01;
-    particleSystem.start();
+    particleSystem.targetStopDuration = 0.01
+    particleSystem.start()
 }
