@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react'
+import star from '../assets/solidStar.png'
+
 
 import {
     Engine,
     Scene,
     ArcRotateCamera,
-    HemisphericLight,
     Vector3,
     CreateGround,
-    CreateSphere,
     Tools,
     PBRMaterial,
     WebGPUEngine,
     SceneLoader,
     Color3,
+    Color4,
     StandardMaterial,
     MeshBuilder,
     CubeTexture,
@@ -20,7 +21,9 @@ import {
     Space,
     Matrix,
     ShadowGenerator,
-    DirectionalLight
+    DirectionalLight,
+    Animation,
+    ParticleSystem
 } from "@babylonjs/core"
 import "@babylonjs/loaders"
 
@@ -269,7 +272,11 @@ export const createCube = (color, clone) => {
     box.material = pbr
     box.position = new Vector3(0, box.scaling.y/2, 0)
     shadowGenerator.addShadowCaster(box)
+    box.enableEdgesRendering()
+    box.edgesWidth = 4.0
+    box.edgesColor = new Color4(0, 1, 0, 0.5)
     counter++
+    puff()
     return box
 }
 
@@ -290,5 +297,39 @@ export const screenPos = (box) => {
 }
 
 
+export const scaleAnimation = (box, axis, start , end)  =>{
+    const lerpscaling = new Animation("lerpscaling", axis, 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CONSTANT);
+    const keyFrames = []; 
+    keyFrames.push({
+        frame: 0,
+        value: parseFloat(start) //start value
+    });
+        keyFrames.push({
+        frame: 10,
+        value: parseFloat(end) //end value
+    });
+    lerpscaling.setKeys(keyFrames); 
 
+    box.animations.push(lerpscaling); //pass in object
 
+    scene.beginAnimation(box, 0, 2 * 30, true);
+}
+
+const puff =() =>{
+    let particleSystem = new ParticleSystem("stars", 1000, scene);
+    particleSystem.particleTexture = new  Texture(star, scene);
+    particleSystem.createPointEmitter(new Vector3(-1, 0, -1), new Vector3(1, 0.2, 1));
+    particleSystem.color1 = new Color4(0.51, 0.13, 0.13);
+    particleSystem.color2 = new Color4(1, 1, 1, 0);
+    particleSystem.colorDead = new Color4(1, 1, 1, 0);
+    particleSystem.emitRate = 6000;
+    particleSystem.minEmitPower = 1;
+    particleSystem.maxEmitPower = 20;
+    particleSystem.addStartSizeGradient(1, 0.1);
+    particleSystem.minAngularSpeed = 0;
+    particleSystem.maxAngularSpeed = 1;
+    particleSystem.addDragGradient(0,0.7,0.7);
+    particleSystem.maxLifeTime = 0.001
+    particleSystem.targetStopDuration = 0.01;
+    particleSystem.start();
+}

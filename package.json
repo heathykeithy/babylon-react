@@ -20,7 +20,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "pages:dev": "wrangler pages dev --compatibility-date=2023-10-02 --port 3001 -- npm start",
+    "pages:dev": "wrangler pages dev --compatibility-date=2023-10-02 --port 3000 -- npm start",
     "pages:deploy": "npm run build && wrangler pages deploy ./build"
   },
   "eslintConfig": {

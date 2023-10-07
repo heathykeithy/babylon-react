@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { createCube, changeColor, screenPos, } from '../scripts/setup'
+import { createCube, changeColor, screenPos, scaleAnimation } from '../scripts/setup'
 import { GithubPicker } from 'react-color'
-import { lerp } from './lerp'
+
 
 
 
@@ -39,10 +39,13 @@ const Gui = ({ scene, canvas }) => {
                         setSelected(pickResult.pickedMesh)
                         highlight(pickResult.pickedMesh)
                         pointerDown(pickResult.pickedMesh)
-
                         mouseDownEvents()
+                        //get face
+                        console.log(pickResult.faceId) //TODO add face changing
+                        
                     }
                     else {
+                        setSelected({})
                         boxDeselected(selected)
                         setSelected(pickResult.pickedMesh)
                         highlight(pickResult.pickedMesh)
@@ -56,6 +59,7 @@ const Gui = ({ scene, canvas }) => {
                     boxDeselected(selected)
                     setSelected({})
                 }
+                //TODO if box is seleceted and pick another box
             }
         }
 
@@ -126,6 +130,7 @@ const Gui = ({ scene, canvas }) => {
     const boxDeselected = (box) => {
         box.material.wireframe = false
         //TODO deselect all function
+        setSelected({})
     }
 
     const destory = (box) => {
@@ -135,23 +140,13 @@ const Gui = ({ scene, canvas }) => {
         setCount(count - 1)
     }
 
- 
-
-    const [scaleX, setScaleX] = useState('')
-    const [scaleY, setScaleY] = useState('')
-    const [scaleZ, setScaleZ] = useState('')
 
     const scale = (axis, value) => {
-        // box.scaling[axis] = lerp(box.scaling[axis], value, 1000)
-
-        if (parseFloat(value) === '') {
+        if (value === '' || value == 0) {
             value = 0.1
-            axis === 'x' ? setScaleX(value) :
-                axis === 'y' ? setScaleY(value) :
-                    axis === 'z' ? setScaleZ(value) :
-                        value = null
         }
-        selected.scaling[axis] = value
+        const property = "scaling."+ axis
+        scaleAnimation(selected, property, selected.scaling[axis], value )    
         if (axis === 'y') {
             selected.position.y = value / 2 //keep box on the ground
         }
