@@ -50,6 +50,7 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
     let windowSize = []
     let orange = {}
 
+
     const sceneBuild = (engine, canvas) => {
         //scene
         scene = new Scene(engine)
@@ -85,7 +86,8 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         // sphere.material = pbr
 
         // ground
-        let ground = CreateGround("ground1", { width: 256, height: 256, subdivisions: 2 }, scene)
+        let ground = CreateGround("ground1", { width: 256, height: 256, subdivisions: 16 }, scene)
+        ground.position = new Vector3(0,-0.01,0)
         ground.material = brown
         ground.receiveShadows = true
 
@@ -261,7 +263,15 @@ export const createCube = (color, clone) => {
     const box = MeshBuilder.CreateBox("box " + counter)
     let pbr = new PBRMaterial()
     if(clone){
-        box.scaling = clone.scaling
+      //  box.scaling = clone.scaling //this does not work, it copies the object not the values
+        // for (let i= 0; i <  box.scaling.length; i++){
+        //     box.scaling[i] = clone.scaling[i]
+        // }
+        // box.scaling.x = clone.scaling.x
+        // box.scaling.y = clone.scaling.y
+        // box.scaling.z = clone.scaling.z
+        const { x, y, z } = clone.scaling;
+        box.scaling = new Vector3(x, y, z);
         pbr.albedoColor = color
     }
     else{
@@ -309,13 +319,11 @@ export const scaleAnimation = (box, axis, start , end)  =>{
         value: parseFloat(end) //end value
     });
     lerpscaling.setKeys(keyFrames); 
-
     box.animations.push(lerpscaling); //pass in object
-
     scene.beginAnimation(box, 0, 2 * 30, true);
 }
 
-const puff =() =>{
+const puff =() =>{ 
     let particleSystem = new ParticleSystem("stars", 1000, scene);
     particleSystem.particleTexture = new  Texture(star, scene);
     particleSystem.createPointEmitter(new Vector3(-1, 0, -1), new Vector3(1, 0.2, 1));

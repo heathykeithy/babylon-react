@@ -33,32 +33,37 @@ const Gui = ({ scene, canvas }) => {
                     console.log('clicked left on ', pickResult.pickedMesh.id)
                 }
                 if (event.inputIndex === 2 && pickResult.pickedMesh.id.includes("box")) { //left click
-                    console.log('clicked right:', pickResult.pickedMesh.id)
-                    if (!Object.entries(selected).length && selected !== pickResult.pickedMesh) {
-                        clearInputs()
+                    if(!Object.entries(selected).length){
                         setSelected(pickResult.pickedMesh)
                         highlight(pickResult.pickedMesh)
-                        pointerDown(pickResult.pickedMesh)
-                        mouseDownEvents()
-                        //get face
-                        console.log(pickResult.faceId) //TODO add face changing
-                        
+                        return
                     }
-                    else {
-                        setSelected({})
+                    if (selected.id !== pickResult.pickedMesh.id) {
+                        clearInputs()
                         boxDeselected(selected)
                         setSelected(pickResult.pickedMesh)
                         highlight(pickResult.pickedMesh)
-
+                        //get face
+                        console.log(pickResult.faceId) //TODO add face changing
                     }
+                    else {
+                        boxDeselected(selected)
+                        //setSelected({})
+                        setSelected(pickResult.pickedMesh)
+                        highlight(pickResult.pickedMesh)
+                    }
+                    pointerDown(pickResult.pickedMesh)
+                    mouseDownEvents()
                 }
                 if (event.inputIndex === 2 &&
                     pickResult.pickedMesh.id &&
-                    pickResult.pickedMesh.id !== "box" &&
+                    !pickResult.pickedMesh.id.includes("box") &&
                     Object.entries(selected).length) {
                     boxDeselected(selected)
                     setSelected({})
                 }
+
+
                 //TODO if box is seleceted and pick another box
             }
         }
@@ -145,8 +150,8 @@ const Gui = ({ scene, canvas }) => {
         if (value === '' || value == 0) {
             value = 0.1
         }
-        const property = "scaling."+ axis
-        scaleAnimation(selected, property, selected.scaling[axis], value )    
+        const property = "scaling." + axis
+        scaleAnimation(selected, property, selected.scaling[axis], value)
         if (axis === 'y') {
             selected.position.y = value / 2 //keep box on the ground
         }
@@ -165,9 +170,9 @@ const Gui = ({ scene, canvas }) => {
         createCube(mainColor)
         setCount(count + 1)
     }
-   const cloneObject = (box) => {
+    const cloneObject = (box) => {
         const color = box.material.albedoColor
-        createCube(color, box) 
+        createCube(color, box)
         setCount(count + 1)
     }
     return (
