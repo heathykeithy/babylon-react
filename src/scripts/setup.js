@@ -289,11 +289,11 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
             <div className='settings'>
                 <div className='postprocess-option'>
                     <input type="checkbox" id="volumetrics" name="volumetrics" value="volumetrics" checked={vol} onChange={() => volumetricsHandler()}></input>
-                    <label for="volumetrics">Volumetric Lighting</label>
+                    <label htmlFor="volumetrics">Volumetric Lighting</label>
                 </div>
                 <div className='postprocess-option'>
                     <input type="checkbox" id="oa" name="oa" value="oa" checked={AO} onChange={() => AOHandler()}></input>
-                    <label for="edge">Ambient Occlusion</label>
+                    <label htmlFor="edge">Ambient Occlusion</label>
                 </div>
 
             </div>

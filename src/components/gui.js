@@ -3,6 +3,7 @@ import { createCube, changeColor, screenPos, scaleAnimation, extrudeCap } from '
 import { GithubPicker } from 'react-color'
 import addcudeUI from '../assets/UI/AddCube.svg'
 import extrudeCapUI from '../assets/UI/ExtrudeCap.svg'
+import { Vector3 } from '@babylonjs/core'
 
 
 
@@ -26,6 +27,7 @@ const Gui = ({ scene, canvas }) => {
     const currentMesh = useRef(null)
     const [count, setCount] = useState(0)
     const [capCount, setCapCount] = useState(0)
+    const screenVector = useRef([0, 0])
 
     useEffect(() => {
 
@@ -56,7 +58,7 @@ const Gui = ({ scene, canvas }) => {
                             console.log(pickResult.faceId) //TODO add face changing
                         }
                         pointerDown(pickResult.pickedMesh)
-                        mouseDownEvents()
+                        mouseDownEvents(pickResult.pickedMesh)
                     }
                     else { //if click off a box, deselect
                         if (Object.entries(selected).length) {
@@ -67,14 +69,15 @@ const Gui = ({ scene, canvas }) => {
                     }
                 }
             }
+            
         }
 
-        const mouseDownEvents = () => {
+        const mouseDownEvents = (mesh) => {
             scene.onPointerUp = () => {
-                pointerUp()
+                pointerUp(mesh)
             }
             scene.onPointerMove = () => {
-                pointerMove()
+                pointerMove(mesh)
             }
         }
 
@@ -98,41 +101,42 @@ const Gui = ({ scene, canvas }) => {
         }
 
         //reconnect camera
-        const pointerUp = () => {
+        const pointerUp = (mesh) => {
             if (startingPoint.current) {
                 camera.attachControl(canvas, true)
                 startingPoint.current = null
-                // if (selected.position.y < selected.scaling.y / 2) {
-                //     selected.position = new Vector3(selected.position.x,
-                //         selected.scaling.y / 2,
-                //         selected.position.z)
-                // }
+                if(mesh.position.y < mesh.scaling.y/2){
+                    mesh.position = new Vector3(mesh.position.x,
+                        mesh.scaling.y/2, mesh.position.z)
+                }
+
                 return
             }
         }
 
         //drag box
-        const pointerMove = () => {
+        const pointerMove = (mesh) => {
             if (!startingPoint.current) {
                 return
             }
             if (!getGroundPosition()) {
                 return
             }
-
             let diff = getGroundPosition().subtract(startingPoint.current)
             currentMesh.current.position.addInPlace(diff)
             startingPoint.current = getGroundPosition()
         }
 
         //update gui panel position
-        // const updatePanel = () => {
-        //     if(Object.entries(selected).length){
+        if (Object.entries(selected).length) {
+            screenVector.current = screenPos(selected)
+        }
 
-        //     }
-        // }
 
     }, [scene, selected, canvas, camera])
+
+
+
 
     const highlight = (mesh) => {
         mesh.material.wireframe = true
@@ -212,7 +216,7 @@ const Gui = ({ scene, canvas }) => {
 
     const [selectedCheckbox, setSelectedCheckbox] = useState("surface");
 
-
+//screenPos(selected)
 
     return (
         <div className="gui">
@@ -229,7 +233,7 @@ const Gui = ({ scene, canvas }) => {
                 <img src={extrudeCapUI} alt='Extrude Cap +'></img>
             </button>
             <div className="dimensions" style={Object.entries(selected).length ?
-                { visibility: "visible", top: screenPos(selected)[1] + 80, left: screenPos(selected)[0] - 106 }
+                { visibility: "visible",top: screenPos(selected)[1] + 80, left: screenPos(selected)[0] - 106 }
                 : { visibility: "hidden" }}>
                 <h2>{selected.id}
                 </h2>
