@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { createCube, changeColor, screenPos, scaleAnimation, extrudeCap } from '../scripts/setup'
+import { createCube, changeColor, screenPos, scaleAnimation, extrudeCap, faceColorChange } from '../scripts/setup'
 import { GithubPicker } from 'react-color'
 import addcudeUI from '../assets/UI/AddCube.svg'
 import extrudeCapUI from '../assets/UI/ExtrudeCap.svg'
@@ -55,7 +55,8 @@ const Gui = ({ scene, canvas }) => {
                             }
                             //clicking on already selected
                             //get face
-                            console.log(pickResult.faceId) //TODO add face changing
+                            faceColorChange(pickResult.pickedMesh, pickResult.faceId)
+                            console.log(pickResult.faceId) //TODO finish face changing
                         }
                         pointerDown(pickResult.pickedMesh)
                         mouseDownEvents(pickResult.pickedMesh)
@@ -69,7 +70,7 @@ const Gui = ({ scene, canvas }) => {
                     }
                 }
             }
-            
+
         }
 
         const mouseDownEvents = (mesh) => {
@@ -105,9 +106,9 @@ const Gui = ({ scene, canvas }) => {
             if (startingPoint.current) {
                 camera.attachControl(canvas, true)
                 startingPoint.current = null
-                if(mesh.position.y < mesh.scaling.y/2){
+                if (mesh.position.y < mesh.scaling.y / 2) {
                     mesh.position = new Vector3(mesh.position.x,
-                        mesh.scaling.y/2, mesh.position.z)
+                        mesh.scaling.y / 2, mesh.position.z)
                 }
 
                 return
@@ -216,7 +217,7 @@ const Gui = ({ scene, canvas }) => {
 
     const [selectedCheckbox, setSelectedCheckbox] = useState("surface");
 
-//screenPos(selected)
+    //screenPos(selected)
 
     return (
         <div className="gui">
@@ -233,7 +234,7 @@ const Gui = ({ scene, canvas }) => {
                 <img src={extrudeCapUI} alt='Extrude Cap +'></img>
             </button>
             <div className="dimensions" style={Object.entries(selected).length ?
-                { visibility: "visible",top: screenPos(selected)[1] + 80, left: screenPos(selected)[0] - 106 }
+                { visibility: "visible", top: screenPos(selected)[1] + 80, left: screenPos(selected)[0] - 106 }
                 : { visibility: "hidden" }}>
                 <h2>{selected.id}
                 </h2>
@@ -257,9 +258,9 @@ const Gui = ({ scene, canvas }) => {
                     ></input>
                 </div>
                 <input type="checkbox" id="surface" name="surface" value="surface" checked={selectedCheckbox === "surface"} onChange={() => handleCheckboxes("surface")}></input>
-                <label for="surface">Surface</label>
+                <label htmlFor="surface">Surface</label>
                 <input type="checkbox" id="edge" name="edge" value="edge" checked={selectedCheckbox === "edge"} onChange={() => handleCheckboxes("edge")}></input>
-                <label for="edge">Edges</label>
+                <label htmlFor="edge">Edges</label>
                 <GithubPicker triangle='hide' onChangeComplete={handleChangeComplete}  >
                 </GithubPicker>
                 <button onClick={() => destory(selected)}

@@ -27,7 +27,9 @@ import {
     Animation,
     ParticleSystem,
     VolumetricLightScatteringPostProcess,
-    SSAORenderingPipeline
+    SSAORenderingPipeline,
+    VertexBuffer,
+    GlowLayer
 } from "@babylonjs/core"
 import "@babylonjs/loaders"
 
@@ -68,10 +70,13 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
 
         //lights
         const light = new DirectionalLight("dir01", new Vector3(-1, -2, 1), scene)
-
         light.position = new Vector3(60, 130, -65)
         light.intensity = 1
 
+        //glow
+        // const glow = new GlowLayer("glow", scene)
+        // glow.intensity = 0.2
+       
 
         //ambient occlusion
         let ssaoRatio = { ssaoRatio: 0.5, combineRatio: 1.0 }
@@ -317,10 +322,15 @@ const createMaterial = (color, clone) => {
     return pbr
 }
 
-const addEdges = (mesh) => {
+const addEdges = (mesh, clone) => {
     mesh.enableEdgesRendering()
     mesh.edgesWidth = 4.0
-    mesh.edgesColor = new Color4(0, 1, 0, 0.5)
+    if (clone) {
+        mesh.edgesColor = clone.edgesColor
+    }
+    else {
+        mesh.edgesColor = new Color4(0, 1, 0, 0.5)
+    }
 }
 
 export let boxCounter = 0
@@ -333,10 +343,11 @@ export const createCube = (color, clone) => {
         //  box.scaling = clone.scaling //this does not work, it copies the object not the values
         const { x, y, z } = clone.scaling
         box.scaling = new Vector3(x, y, z)
+
     }
+    addEdges(box, clone)
     box.position = new Vector3(0, box.scaling.y / 2, 0)
     shadowGenerator.addShadowCaster(box)
-    addEdges(box)
     boxCounter++
     puff()
     return box
@@ -392,7 +403,7 @@ export const extrudeCap = (extValue, color, clone) => {
     }
     const extrusion = MeshBuilder.ExtrudeShapeCustom("extruded" + capCounter, { shape: capShape, path: myPath, updatable: true, sideOrientation: Mesh.DOUBLESIDE })
     extrusion.material = createMaterial(color, clone)
-    addEdges(extrusion)
+    addEdges(extrusion, clone)
     if (clone) {
         const { x, y, z } = clone.scaling
         extrusion.scaling = new Vector3(x, y, z)
@@ -418,4 +429,29 @@ const puff = () => { //partical animation
     particleSystem.maxLifeTime = 0.001
     particleSystem.targetStopDuration = 0.01
     particleSystem.start()
+}
+
+export const faceColorChange = (mesh, face) => {
+    let indices = mesh.getIndices()
+    let positions = mesh.getVerticesData(VertexBuffer.PositionKind)
+    let colorkind = mesh.getVerticesData(VertexBuffer.ColorKind)
+    let verts = positions.length / 3
+    if (!colorkind) {
+        colorkind = new Array(4 * verts)
+        colorkind = colorkind.fill(1);
+    }
+    face = face / 2 
+    let facet = 2 * Math.floor(face) //gets matching tris to make quad
+    let clr = new Color4(1,0,0,1)
+    let vertex
+    for (let i = 0; i < 6; i++) { //iterate through verts assigning values 
+        vertex = indices[3 * facet + i];
+        colorkind[4 * vertex] = clr.r;
+        colorkind[4 * vertex + 1] = clr.g;
+        colorkind[4 * vertex + 2] = clr.b;
+        colorkind[4 * vertex + 3] = clr.a;
+    }
+    mesh.setVerticesData(VertexBuffer.ColorKind, colorkind);
+
+
 }
