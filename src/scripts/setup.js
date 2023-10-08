@@ -6,6 +6,7 @@ import sun from '../assets/sun.png'
 import {
     Engine,
     Scene,
+    Mesh,
     ArcRotateCamera,
     Vector3,
     CreateGround,
@@ -70,15 +71,14 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
 
         light.position = new Vector3(60, 130, -65)
         light.intensity = 1
-        window.sun = light
         //volumetrics
         const rays = new VolumetricLightScatteringPostProcess('rays', 1.0, camera, null, 100, Texture.BILINEAR_SAMPLINGMODE, engine, false)
         rays.mesh.material.diffuseTexture = new Texture(sun, scene, true, false, Texture.BILINEAR_SAMPLINGMODE)
         rays.mesh.material.diffuseTexture.hasAlpha = true
-        // rays.mesh.position = new Vector3(-150, 150, 150)
         rays.mesh.scaling = new Vector3(30, 30, 30)
         rays.mesh.position = light.position
-
+        
+        //ambient occlusion
         let ssaoRatio = { ssaoRatio: 0.5, combineRatio: 1.0 }
         ssao = new SSAORenderingPipeline("ssao", scene, ssaoRatio)
         ssao.fallOff = 0.000001
@@ -232,22 +232,6 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
 
 
 
-    //show or hide meshes
-    // if (babylonObjects[2]) {
-    //     let checkvalid = false //HACk had to check if each object are valid first, workaroud error
-    //     babylonObjects[2].Frame ? babylonObjects[2].Frame.isVisible = hideflags.frame : checkvalid = true
-    //     babylonObjects[2].windowsmesh ? babylonObjects[2].windowsmesh.isVisible = hideflags.window : checkvalid = true
-    //     babylonObjects[2].door ? babylonObjects[2].door.isVisible = hideflags.door : checkvalid = true
-    //     babylonObjects[2].Wall ? babylonObjects[2].Wall.isVisible = hideflags.wall : checkvalid = true
-    // }
-
-    //  scene.onPointerDown = () => {console.log("clicked")}
-    // //  function castRay(){
-    // //     var ray = scene.createPickingRay(scene.pointerX, scene.pointerY, Matrix.Identity(), camera, false)	
-    // //     var hit = scene.pickWithRay(ray)
-    // //     console.log("HIT!: " + hit)
-    // // }
-
     function loadMeshes(obj, path, filename, scene) {
         // obj.file = await SceneLoader.AppendAsync("")
         obj.file = SceneLoader.ImportMesh("", path, filename, scene, (meshes, ps, sk, ani) => {
@@ -273,7 +257,7 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         if (vol) {
             scene.postProcessRenderPipelineManager.enableEffectInPipeline("ssao", ssao.SSAOCombineRenderEffect, camera)
         }
-        else{
+        else {
             scene.postProcessRenderPipelineManager.detachCamerasFromRenderPipeline("ssao", camera)
         }
     }
@@ -290,11 +274,11 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
             </canvas>
             <div className='settings'>
                 <button className='button-87'
-             
+
                     onClick={volumetricsHandler}
                 >Volumetric Lighting</button>
                 <button className='button-87'
-                    
+
                     onClick={AOHandler}
                 >Ambient Occlusion</button>
             </div>
@@ -305,20 +289,9 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
 
 export default BabylonComponent
 
-export let counter = 0
-export const createCube = (color, clone) => {
-    const box = MeshBuilder.CreateBox("box " + counter)
+const createMaterial = (color, clone) => {
     let pbr = new PBRMaterial()
     if (clone) {
-        //  box.scaling = clone.scaling //this does not work, it copies the object not the values
-        // for (let i= 0 i <  box.scaling.length i++){
-        //     box.scaling[i] = clone.scaling[i]
-        // }
-        // box.scaling.x = clone.scaling.x
-        // box.scaling.y = clone.scaling.y
-        // box.scaling.z = clone.scaling.z
-        const { x, y, z } = clone.scaling
-        box.scaling = new Vector3(x, y, z)
         pbr.albedoColor = color
     }
     else {
@@ -326,22 +299,45 @@ export const createCube = (color, clone) => {
     }
     pbr.metallic = 0.1
     pbr.roughness = 0.1
-    box.material = pbr
+    return pbr
+}
+
+const addEdges = (mesh) => {
+    mesh.enableEdgesRendering()
+    mesh.edgesWidth = 4.0
+    mesh.edgesColor = new Color4(0, 1, 0, 0.5)
+}
+
+export let boxCounter = 0
+export let capCounter = 0
+
+export const createCube = (color, clone) => {
+    const box = MeshBuilder.CreateBox("box " + boxCounter)
+    box.material = createMaterial(color, clone)
+    if (clone) {
+        //  box.scaling = clone.scaling //this does not work, it copies the object not the values
+        const { x, y, z } = clone.scaling
+        box.scaling = new Vector3(x, y, z)
+    }
     box.position = new Vector3(0, box.scaling.y / 2, 0)
     shadowGenerator.addShadowCaster(box)
-    box.enableEdgesRendering()
-    box.edgesWidth = 4.0
-    box.edgesColor = new Color4(0, 1, 0, 0.5)
-    counter++
+    addEdges(box)
+    boxCounter++
     puff()
     return box
 }
 
+export const changeColor = (mesh, color, surface) => {
+     const convertColor = Color3.FromHexString(color)
+    if (surface === "surface") {
+        mesh.material.albedoColor = convertColor
+    }
+    else { //convert to colour4
+        console.log(convertColor)
+        mesh.edgesColor = new Color4(convertColor.r, convertColor.g, convertColor.b, 0.5)
+    }
 
-export const changeColor = (box, color) => {
-    box.material.albedoColor = Color3.FromHexString(color)
 }
-
 
 export const screenPos = (box) => {
     const screenPosition = Vector3.Project(box.position,
@@ -352,7 +348,6 @@ export const screenPos = (box) => {
     const xy = [screenPosition.x, screenPosition.y]
     return xy
 }
-
 
 export const scaleAnimation = (box, axis, start, end) => {
     const lerpscaling = new Animation("lerpscaling", axis, 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CONSTANT)
@@ -370,7 +365,28 @@ export const scaleAnimation = (box, axis, start, end) => {
     scene.beginAnimation(box, 0, 2 * 30, true)
 }
 
-const puff = () => {
+export const extrudeCap = (extValue, color, clone) => {
+    const capShape = [ //create V shape
+        new Vector3(-1, 0, 0),
+        new Vector3(0, 0.5, 0),
+        new Vector3(1, 0, 0),
+    ]
+    const myPath = [] //extend path from UI
+    for (let i = 0; i < extValue; i++) {
+        myPath[i] = new Vector3(i, 0, 0)
+    }
+    const extrusion = MeshBuilder.ExtrudeShapeCustom("extruded" + capCounter, { shape: capShape, path: myPath, updatable: true, sideOrientation: Mesh.DOUBLESIDE })
+    extrusion.material = createMaterial(color, clone)
+    addEdges(extrusion)
+    if (clone) {
+        const { x, y, z } = clone.scaling
+        extrusion.scaling = new Vector3(x, y, z)
+    }
+    capCounter++
+    return extrusion
+}
+
+const puff = () => { //partical animation 
     let particleSystem = new ParticleSystem("stars", 1000, scene)
     particleSystem.particleTexture = new Texture(star, scene)
     particleSystem.createPointEmitter(new Vector3(-1, 0, -1), new Vector3(1, 0.2, 1))

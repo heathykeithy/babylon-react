@@ -153,7 +153,7 @@ body {
     padding: 10px 20px;
     cursor: pointer;
     transition: background-color 0.3s;
-    margin-top: 5px;
+    margin: 5px;
   }
   
   .dimensions button:hover {
@@ -166,3 +166,7 @@ body {
     margin-left: 10px;
   }
 
+input[type="checkbox"]
+{
+    clip-path: circle(46% at 50% 50%);
+}

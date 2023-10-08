@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { createCube, changeColor, screenPos, scaleAnimation } from '../scripts/setup'
+import { createCube, changeColor, screenPos, scaleAnimation, extrudeCap } from '../scripts/setup'
 import { GithubPicker } from 'react-color'
 
 
@@ -23,41 +23,47 @@ const Gui = ({ scene, canvas }) => {
     const startingPoint = useRef(null)
     const currentMesh = useRef(null)
     const [count, setCount] = useState(0)
+    const [capCount, setCapCount] = useState(0)
 
     useEffect(() => {
 
+        //click functions 
         scene.onPointerDown = (event, pickResult) => {
             if (pickResult.hit) {
                 console.log('Object clicked:', pickResult.pickedMesh.id)
                 if (event.inputIndex === 4) { //right click
                     //not used
                 }
-                if (event.inputIndex === 2 && pickResult.pickedMesh.id.includes("box")) { //left click
-                    //nothing selected
-                    if (!Object.entries(selected).length) {
-                        setSelected(pickResult.pickedMesh)
-                        highlight(pickResult.pickedMesh)
-                    }
-                    else {//select new box to replace selected
-                        if (selected.id !== pickResult.pickedMesh.id) {
-                            clearInputs()
-                            boxDeselected(selected)
+                if (event.inputIndex === 2) {//left click
+                    if (pickResult.pickedMesh.id.includes("box")
+                        || pickResult.pickedMesh.id.includes("extruded")) {
+                        //nothing selected
+                        if (!Object.entries(selected).length) {
                             setSelected(pickResult.pickedMesh)
                             highlight(pickResult.pickedMesh)
                         }
-                        //clicking on already selected
-                        //get face
-                        console.log(pickResult.faceId) //TODO add face changing
+                        else {//select new box to replace selected
+                            if (selected.id !== pickResult.pickedMesh.id) {
+                                clearInputs()
+                                boxDeselected(selected)
+                                setSelected(pickResult.pickedMesh)
+                                highlight(pickResult.pickedMesh)
+                            }
+                            //clicking on already selected
+                            //get face
+                            console.log(pickResult.faceId) //TODO add face changing
+                        }
+                        pointerDown(pickResult.pickedMesh)
+                        mouseDownEvents()
                     }
-                    pointerDown(pickResult.pickedMesh)
-                    mouseDownEvents()
-                }
-                else { //if click off a box, deselect
-                    if (Object.entries(selected).length) {
-                        clearInputs()
-                        boxDeselected(selected)
+                    else { //if click off a box, deselect
+                        if (Object.entries(selected).length) {
+                            clearInputs()
+                            boxDeselected(selected)
+                        }
                     }
                 }
+
             }
         }
 
@@ -119,8 +125,8 @@ const Gui = ({ scene, canvas }) => {
 
     }, [scene, selected, canvas, camera])
 
-    const highlight = (box) => {
-        box.material.wireframe = true
+    const highlight = (mesh) => {
+        mesh.material.wireframe = true
     }
 
 
@@ -130,17 +136,21 @@ const Gui = ({ scene, canvas }) => {
         document.querySelector('#inputZ').value = ''
     }
 
-    const boxDeselected = (box) => {
-        box.material.wireframe = false
-        //TODO deselect all function
-        setSelected({})
+    const boxDeselected = (mesh) => {
+        mesh.material.wireframe = false
+
     }
 
-    const destory = (box) => {
-        box.dispose()
+    const destory = (mesh) => {
+        mesh.dispose()
         setSelected({})
-        console.log(scene)
-        setCount(count - 1)
+        if (selected.id.includes("box")) {
+
+            setCount(count - 1)
+        }
+        else {
+            setCapCount(capCount - 1)
+        }
     }
 
 
@@ -160,7 +170,7 @@ const Gui = ({ scene, canvas }) => {
     const handleChangeComplete = (color) => {
         setMainColor(color.hex)
         if (Object.entries(selected).length) {
-            changeColor(selected, color.hex)
+            changeColor(selected, color.hex, selectedCheckbox)
         }
     }
 
@@ -168,31 +178,48 @@ const Gui = ({ scene, canvas }) => {
         createCube(mainColor)
         setCount(count + 1)
     }
-    const cloneObject = (box) => {
-        const color = box.material.albedoColor
-        createCube(color, box)
-        setCount(count + 1)
+    const cloneObject = (copy) => {
+        const color = copy.material.albedoColor
+        if (selected.id.includes("box")) {
+            createCube(color, copy)
+            setCount(count + 1)
+        }
+        else {
+            extrudeCap(2, color, copy)
+            setCapCount(capCount + 1)
+        }
     }
+
+    const addExtruded = (depth) => {
+        extrudeCap(depth, mainColor)
+        setCapCount(capCount + 1)
+    }
+
+    const handleCheckboxes= (value) =>{
+        setSelectedCheckbox(value)
+    }
+
+    const [selectedCheckbox, setSelectedCheckbox] = useState("surface");
+
     return (
         <div className="gui">
             <button
                 className="button-87"
                 onClick={() => addCube()}
-            >Cube +</button>
-            <h4>Object Count = {count}</h4>
+            >{count + " "} Cube +</button>
+            <button
+                className="button-87"
+                onClick={() => addExtruded(2)}
+            >{capCount + " "} Extrude Cap +</button>
             <div className="dimensions" style={Object.entries(selected).length ?
                 { visibility: "visible", top: screenPos(selected)[1] + 80, left: screenPos(selected)[0] - 106 }
                 : { visibility: "hidden" }}>
                 <h2>{selected.id}
                 </h2>
-
                 <div>
                     <label htmlFor="inputX">X</label>
                     <input id="inputX" type='number'
                         placeholder={Object.entries(selected).length ? selected.scaling.x : 1}
-                        //  placeholder={scaleX}
-                        // value={()=> {if(Object.entries(selected).length  && xFocus === false){return selected.scaling.x}}}
-                        //value={scaleX}
                         ref={inputX} aria-label='X'
                         onChange={(e) => scale('x', e.target.value)}
                     >
@@ -200,21 +227,21 @@ const Gui = ({ scene, canvas }) => {
                     <label htmlFor="inputY">Y</label>
                     <input id="inputY" type='number'
                         placeholder={Object.entries(selected).length ? selected.scaling.y : 1}
-                        //placeholder={scaleY}
                         ref={inputY} aria-label='Y' onChange={(e) => scale('y', e.target.value)}
-                    //value={scaleY}
                     >
                     </input>
                     <label htmlFor="inputZ">Z</label>
                     <input id="inputZ" type='number'
                         placeholder={Object.entries(selected).length ? selected.scaling.z : 1}
-                        //placeholder={scaleZ}
                         ref={inputZ} aria-label='Z' onChange={(e) => scale('z', e.target.value)}
-                    //value={scaleZ}
                     ></input>
                 </div>
+                <input type="checkbox" id="surface" name="surface" value="surface" checked={selectedCheckbox === "surface"} onChange={ ()=> handleCheckboxes("surface")}></input>
+                <label for="surface">Surface</label>
+                <input type="checkbox" id="edge" name="edge" value="edge" checked={selectedCheckbox === "edge"} onChange={()=> handleCheckboxes("edge")}></input>
+                <label for="edge">Edges</label>
                 <GithubPicker triangle='hide' onChangeComplete={handleChangeComplete}  >
-                </GithubPicker     >
+                </GithubPicker>
                 <button onClick={() => destory(selected)}
                 >Delete</button>
                 <button onClick={() => cloneObject(selected)}
