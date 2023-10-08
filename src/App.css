@@ -40,22 +40,39 @@ body {
 
 #renderType {
     position: absolute;
-    top: 0;
+    bottom: 0;
     right: 20px;
     width: 50vw;
     text-align: right;
+    color: white;
 }
 
-.settings{
+.settings {
     position: absolute;
-    top: 60px;
+    top: 10px;
     right: 0px;
     text-align: right;
+    background-color: #282c34;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+    border: 1px;
+    border-style: dashed;
+    opacity: 70%;
+    border-color: white;
+    border-right: none;
+    color: white;
+
 }
 
 .settings button {
-    width:150px;
+    width: 150px;
     padding: 3px;
+}
+
+.postprocess-option {
+    display: block;
+    padding: 5px;
+    margin: 5px;
 }
 
 @keyframes App-logo-spin {
@@ -68,55 +85,63 @@ body {
     }
 }
 
-
-
 .gui {
     position: absolute;
-
 }
 
-
-.button-87 {
+.buttonSN {
+    font-size: 64px;
     width: -webkit-fill-available;
     margin: 10px;
     padding: 15px 30px;
     text-align: center;
     text-transform: uppercase;
     transition: 0.5s;
-    background-size: 200% auto;
+    background-color: #282c34;
     color: white;
     border-radius: 10px;
     display: block;
-    border: 0px;
+    border: 1px;
     font-weight: 700;
-    box-shadow: 0px 0px 14px -7px #f09819;
-    background-image: linear-gradient(45deg, #FF512F 0%, #F09819 51%, #FF512F 100%);
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
     touch-action: manipulation;
+    border-style: dashed;
+    opacity: 70%;
 }
 
-.button-87:hover {
-    background-position: right center;
-    /* change the direction of the change here */
-    color: #fff;
+.buttonSN:hover {
+    background-color: #494949;
     text-decoration: none;
 }
 
-.button-87:active {
-    transform: scale(0.95);
+.buttonSN:active {
+    transform: scale(1.2);
+    transition: 0.1s;
 }
 
-.button-87:disabled {
-    background-image: linear-gradient(45deg, #636363 0%, #d4d4d4 51%, #747474 100%);
+.buttonSN:disabled {
+    background-color: #979797;
+    opacity: 50%;
+}
+
+.upper {
+    margin-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.lower {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
 }
 
 .dimensions {
     position: absolute;
-    /* top: 10px;  */
-    /* left: 10px;  */
-    background-color: #ffffff00;
+    top: 1000px;
+    left: 0;
     border: 1px solid #ddd;
     opacity: 70%;
     padding: 10px;
@@ -124,28 +149,35 @@ body {
     font-family: Arial, sans-serif;
     font-size: 14px;
     color: #ffffff;
-  }
-  
-  .dimensions h2 {
+    text-transform: uppercase;
+    transition: 0.5s;
+    background-color: #282c34;
+    border-radius: 10px;
+    border: 1px;
+    border-style: dashed;
+    opacity: 70%;
+}
+
+.dimensions h2 {
     font-size: 16px;
     margin-bottom: 10px;
-  }
-  
-  .dimensions label {
+}
+
+.dimensions label {
     margin-bottom: 5px;
     margin-right: 5px;
     margin-left: 5px;
-  }
-  
-  .dimensions input[type="number"] {
+}
+
+.dimensions input[type="number"] {
     width: 37px;
     padding: 5px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
-  }
-  
-  .dimensions button {
+}
+
+.dimensions button {
     background-color: #4CAF50;
     color: #ffffff;
     border: none;
@@ -154,19 +186,19 @@ body {
     cursor: pointer;
     transition: background-color 0.3s;
     margin: 5px;
-  }
-  
-  .dimensions button:hover {
-    background-color: #45a049;
-  }
+}
 
-  h4 {
+
+.dimensions button:hover {
+    background-color: #45a049;
+}
+
+h4 {
     color: white;
     font-family: Arial, sans-serif;
     margin-left: 10px;
-  }
+}
 
-input[type="checkbox"]
-{
+input[type="checkbox"] {
     clip-path: circle(46% at 50% 50%);
 }

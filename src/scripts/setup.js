@@ -71,13 +71,8 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
 
         light.position = new Vector3(60, 130, -65)
         light.intensity = 1
-        //volumetrics
-        const rays = new VolumetricLightScatteringPostProcess('rays', 1.0, camera, null, 100, Texture.BILINEAR_SAMPLINGMODE, engine, false)
-        rays.mesh.material.diffuseTexture = new Texture(sun, scene, true, false, Texture.BILINEAR_SAMPLINGMODE)
-        rays.mesh.material.diffuseTexture.hasAlpha = true
-        rays.mesh.scaling = new Vector3(30, 30, 30)
-        rays.mesh.position = light.position
-        
+
+
         //ambient occlusion
         let ssaoRatio = { ssaoRatio: 0.5, combineRatio: 1.0 }
         ssao = new SSAORenderingPipeline("ssao", scene, ssaoRatio)
@@ -88,7 +83,7 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         ssao.base = 0.5
 
         // Attach camera to the SSAO render pipeline
-        scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssao", camera)
+        //  scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssao", camera)
 
         //shadows
         shadowGenerator = new ShadowGenerator(1024, light)
@@ -250,18 +245,37 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         })
     }
 
-    const [vol, setVol] = useState(true)
-
+    const [vol, setVol] = useState(false)
+    const [AO, setAO] = useState(false)
+    let rays = null
     const volumetricsHandler = () => {
-        setVol(!vol)
-        if (vol) {
-            scene.postProcessRenderPipelineManager.enableEffectInPipeline("ssao", ssao.SSAOCombineRenderEffect, camera)
+
+        if (!vol) {
+            rays = new VolumetricLightScatteringPostProcess('rays', 1.0, camera, null, 100, Texture.BILINEAR_SAMPLINGMODE, scene.engine, false)
+            rays.mesh.material.diffuseTexture = new Texture(sun, scene, true, false, Texture.BILINEAR_SAMPLINGMODE)
+            rays.mesh.material.diffuseTexture.hasAlpha = true
+            rays.mesh.scaling = new Vector3(30, 30, 30)
+            rays.mesh.position = scene.lights[0].position
+
         }
         else {
-            scene.postProcessRenderPipelineManager.detachCamerasFromRenderPipeline("ssao", camera)
+            if (rays) {
+                rays.dispose()
+                rays = null
+            }
         }
+        setVol(!vol)
     }
     const AOHandler = () => {
+        if (AO) { //detach AO
+            scene.postProcessRenderPipelineManager.detachCamerasFromRenderPipeline("ssao", camera)
+        }
+        else {
+            //attach AO
+            scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssao", camera)
+            scene.postProcessRenderPipelineManager.enableEffectInPipeline("ssao", ssao.SSAOCombineRenderEffect, camera)
+        }
+        setAO(!AO)
 
     }
 
@@ -273,14 +287,15 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
             >
             </canvas>
             <div className='settings'>
-                <button className='button-87'
+                <div className='postprocess-option'>
+                    <input type="checkbox" id="volumetrics" name="volumetrics" value="volumetrics" checked={vol} onChange={() => volumetricsHandler()}></input>
+                    <label for="volumetrics">Volumetric Lighting</label>
+                </div>
+                <div className='postprocess-option'>
+                    <input type="checkbox" id="oa" name="oa" value="oa" checked={AO} onChange={() => AOHandler()}></input>
+                    <label for="edge">Ambient Occlusion</label>
+                </div>
 
-                    onClick={volumetricsHandler}
-                >Volumetric Lighting</button>
-                <button className='button-87'
-
-                    onClick={AOHandler}
-                >Ambient Occlusion</button>
             </div>
             <p id="renderType">{webGL.current ? "Browser or GPU not supported, falling back to WebGL from WebGPU" : "Running on WebGPU"}</p>
         </div>
@@ -328,7 +343,7 @@ export const createCube = (color, clone) => {
 }
 
 export const changeColor = (mesh, color, surface) => {
-     const convertColor = Color3.FromHexString(color)
+    const convertColor = Color3.FromHexString(color)
     if (surface === "surface") {
         mesh.material.albedoColor = convertColor
     }

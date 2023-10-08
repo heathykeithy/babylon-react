@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { createCube, changeColor, screenPos, scaleAnimation, extrudeCap } from '../scripts/setup'
 import { GithubPicker } from 'react-color'
+import addcudeUI from '../assets/UI/AddCube.svg'
+import extrudeCapUI from '../assets/UI/ExtrudeCap.svg'
 
 
 
@@ -60,10 +62,10 @@ const Gui = ({ scene, canvas }) => {
                         if (Object.entries(selected).length) {
                             clearInputs()
                             boxDeselected(selected)
+                            setSelected({})
                         }
                     }
                 }
-
             }
         }
 
@@ -123,6 +125,13 @@ const Gui = ({ scene, canvas }) => {
             startingPoint.current = getGroundPosition()
         }
 
+        //update gui panel position
+        // const updatePanel = () => {
+        //     if(Object.entries(selected).length){
+
+        //     }
+        // }
+
     }, [scene, selected, canvas, camera])
 
     const highlight = (mesh) => {
@@ -177,6 +186,8 @@ const Gui = ({ scene, canvas }) => {
     const addCube = () => {
         createCube(mainColor)
         setCount(count + 1)
+
+        // console.log(JSON.stringify(scene))
     }
     const cloneObject = (copy) => {
         const color = copy.material.albedoColor
@@ -195,22 +206,28 @@ const Gui = ({ scene, canvas }) => {
         setCapCount(capCount + 1)
     }
 
-    const handleCheckboxes= (value) =>{
+    const handleCheckboxes = (value) => {
         setSelectedCheckbox(value)
     }
 
     const [selectedCheckbox, setSelectedCheckbox] = useState("surface");
 
+
+
     return (
         <div className="gui">
             <button
-                className="button-87"
+                className="buttonSN upper"
                 onClick={() => addCube()}
-            >{count + " "} Cube +</button>
+            >{count + " "}
+                <img src={addcudeUI} alt='Cube +'></img>
+            </button>
             <button
-                className="button-87"
+                className="buttonSN lower"
                 onClick={() => addExtruded(2)}
-            >{capCount + " "} Extrude Cap +</button>
+            >{capCount + " "}
+                <img src={extrudeCapUI} alt='Extrude Cap +'></img>
+            </button>
             <div className="dimensions" style={Object.entries(selected).length ?
                 { visibility: "visible", top: screenPos(selected)[1] + 80, left: screenPos(selected)[0] - 106 }
                 : { visibility: "hidden" }}>
@@ -228,17 +245,16 @@ const Gui = ({ scene, canvas }) => {
                     <input id="inputY" type='number'
                         placeholder={Object.entries(selected).length ? selected.scaling.y : 1}
                         ref={inputY} aria-label='Y' onChange={(e) => scale('y', e.target.value)}
-                    >
-                    </input>
+                    ></input>
                     <label htmlFor="inputZ">Z</label>
                     <input id="inputZ" type='number'
                         placeholder={Object.entries(selected).length ? selected.scaling.z : 1}
                         ref={inputZ} aria-label='Z' onChange={(e) => scale('z', e.target.value)}
                     ></input>
                 </div>
-                <input type="checkbox" id="surface" name="surface" value="surface" checked={selectedCheckbox === "surface"} onChange={ ()=> handleCheckboxes("surface")}></input>
+                <input type="checkbox" id="surface" name="surface" value="surface" checked={selectedCheckbox === "surface"} onChange={() => handleCheckboxes("surface")}></input>
                 <label for="surface">Surface</label>
-                <input type="checkbox" id="edge" name="edge" value="edge" checked={selectedCheckbox === "edge"} onChange={()=> handleCheckboxes("edge")}></input>
+                <input type="checkbox" id="edge" name="edge" value="edge" checked={selectedCheckbox === "edge"} onChange={() => handleCheckboxes("edge")}></input>
                 <label for="edge">Edges</label>
                 <GithubPicker triangle='hide' onChangeComplete={handleChangeComplete}  >
                 </GithubPicker>
