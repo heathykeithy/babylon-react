@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import './App.css'
 import BabylonComponent from './scripts/setup'
-import Gui from './components/gui'
+import Controls from './components/gui'
 
 
  function App() {
@@ -20,7 +20,7 @@ const [canvas,setCanvas] = useState({})
 
     return (
         <div className="App">
-            <Gui scene={scene} canvas={canvas}></Gui>
+            <Controls scene={scene} canvas={canvas}></Controls>
             <BabylonComponent babScene={handleBabscene} babCanvas={handleCanvas}>
             </BabylonComponent>
         </div>

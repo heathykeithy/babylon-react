@@ -29,7 +29,9 @@ import {
     VolumetricLightScatteringPostProcess,
     SSAORenderingPipeline,
     VertexBuffer,
-    GlowLayer
+    GlowLayer,
+    ShaderMaterial,
+    RenderTargetTexture
 } from "@babylonjs/core"
 import "@babylonjs/loaders"
 
@@ -38,7 +40,7 @@ let scene = {}
 let shadowGenerator = {}
 let camera = {}
 let ssao = {}
-
+let shaderMaterial = {}
 
 /**
  * 
@@ -56,7 +58,7 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
     let resizeTimeout
     let windowSize = []
     let orange = {}
-
+    
 
     const sceneBuild = (engine, canvas) => {
         //scene
@@ -76,7 +78,7 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         //glow
         // const glow = new GlowLayer("glow", scene)
         // glow.intensity = 0.2
-       
+
 
         //ambient occlusion
         let ssaoRatio = { ssaoRatio: 0.5, combineRatio: 1.0 }
@@ -104,10 +106,17 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         let brown = orange.current.clone("brownMaterial")
         brown.albedoColor = new Color3(0.7, 0.1, 0)
 
-        //3d objects
-        // let sphere = CreateSphere("sphere1", { segments: 16, diameter: 2 }, scene)
-        // sphere.position.y = 2
-        // sphere.material = pbr
+        //custom shader
+        shaderMaterial = new ShaderMaterial("customShader", scene, "../shaders/custom", {
+            vertex: "custom",
+            fragment: "custom",
+        },
+            {
+                attributes: ["position", "normal", "color"],
+                uniforms: ["worldViewProjection"]
+            })
+
+
 
         // ground
         let ground = CreateGround("ground1", { width: 256, height: 256, subdivisions: 16 }, scene)
@@ -125,11 +134,6 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         skyboxMaterial.specularColor = new Color3(0, 0, 0)
         skybox.material = skyboxMaterial
 
-        //custom mesh loading
-        // let building = {}
-        // loadMeshes(building, "./media/", "building.glb", scene)
-
-        // setBabylonObjects([...babylonObjects, ground, camera, building])
 
         //resize engine render on window resize release
         const handleResize = () => {
@@ -141,13 +145,6 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
             }, 200)
         }
         window.addEventListener('resize', handleResize)
-
-        // scene.onPointerDown = (event, pickResult) => {
-        //     // pickResult is an object that contains information about the clicked object
-        //     if (pickResult.hit) {
-        //       console.log('Object clicked:', pickResult.pickedMesh.id)
-        //     }
-        //   }
 
         engine.runRenderLoop(() => {
             scene.render()
@@ -205,7 +202,6 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
     }
 
 
-
     //entry point
     useEffect(() => {
         if (Object.keys(scene).length === 0) {
@@ -226,10 +222,7 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
                 createSceneGPU() //with webGPU
             }
         }
-
-
     }, [])
-
 
 
     function loadMeshes(obj, path, filename, scene) {
@@ -338,12 +331,19 @@ export let capCounter = 0
 
 export const createCube = (color, clone) => {
     const box = MeshBuilder.CreateBox("box " + boxCounter)
-    box.material = createMaterial(color, clone)
     if (clone) {
         //  box.scaling = clone.scaling //this does not work, it copies the object not the values
         const { x, y, z } = clone.scaling
         box.scaling = new Vector3(x, y, z)
-
+        if (!clone.material) {
+            copyVertData(clone, box)
+        }
+        else {
+            box.material = createMaterial(color, clone)
+        }
+    }
+    else {
+        box.material = createMaterial(color, clone)
     }
     addEdges(box, clone)
     box.position = new Vector3(0, box.scaling.y / 2, 0)
@@ -354,12 +354,16 @@ export const createCube = (color, clone) => {
 }
 
 export const changeColor = (mesh, color, surface) => {
+    if (!mesh.material) {
+        resetVertColors(mesh)
+        mesh.material = createMaterial(color)
+        return
+    }
     const convertColor = Color3.FromHexString(color)
     if (surface === "surface") {
         mesh.material.albedoColor = convertColor
     }
     else { //convert to colour4
-        console.log(convertColor)
         mesh.edgesColor = new Color4(convertColor.r, convertColor.g, convertColor.b, 0.5)
     }
 
@@ -431,27 +435,68 @@ const puff = () => { //partical animation
     particleSystem.start()
 }
 
-export const faceColorChange = (mesh, face) => {
+export const faceColorChange = (mesh, face, color) => {
+    mesh.edgesWidth = 4.0
+    if (mesh.material) {
+        mesh.material.dispose()
+    }
+    const convertColor = Color3.FromHexString(color.hex)
     let indices = mesh.getIndices()
     let positions = mesh.getVerticesData(VertexBuffer.PositionKind)
     let colorkind = mesh.getVerticesData(VertexBuffer.ColorKind)
     let verts = positions.length / 3
     if (!colorkind) {
         colorkind = new Array(4 * verts)
-        colorkind = colorkind.fill(1);
+        colorkind = colorkind.fill(1)
     }
-    face = face / 2 
+    face = face / 2
     let facet = 2 * Math.floor(face) //gets matching tris to make quad
-    let clr = new Color4(1,0,0,1)
+    let clr = new Color4(convertColor.r, convertColor.g, convertColor.b, 1)
     let vertex
     for (let i = 0; i < 6; i++) { //iterate through verts assigning values 
-        vertex = indices[3 * facet + i];
-        colorkind[4 * vertex] = clr.r;
-        colorkind[4 * vertex + 1] = clr.g;
-        colorkind[4 * vertex + 2] = clr.b;
-        colorkind[4 * vertex + 3] = clr.a;
+        vertex = indices[3 * facet + i]
+        colorkind[4 * vertex] = clr.r
+        colorkind[4 * vertex + 1] = clr.g
+        colorkind[4 * vertex + 2] = clr.b
+        colorkind[4 * vertex + 3] = clr.a
     }
-    mesh.setVerticesData(VertexBuffer.ColorKind, colorkind);
+     mesh.setVerticesData(VertexBuffer.ColorKind, colorkind)
 
+
+    //     mesh.edgeRenderer.dispose(); // Dispose the existing edge renderer if it already exists
+    //     mesh.createEdgesRenderer(); // Recreate edges renderer
+    
+    
+    // mesh.enableEdgesRendering(); // Enable edges rendering on the mesh
+    // mesh.edgesColor = new Color4(1, 1, 1, 1);
+}
+
+
+const copyVertData = (clone, mesh) => {
+    // clone.material = shaderMaterial
+    // applyCustomShader(clone.material)
+    // resetVertColors(mesh)
+    // mesh.material = clone.material
+
+    let colorkind = clone.getVerticesData(VertexBuffer.ColorKind)
+    mesh.setVerticesData(VertexBuffer.ColorKind, colorkind)
+}
+
+const resetVertColors = (mesh) => {
+    let colorkind = mesh.getVerticesData(VertexBuffer.ColorKind)
+    if (!colorkind){
+        return
+    }
+    for (let i = 0; i < colorkind.length; i++) {
+        colorkind[i] = 1
+    }
+    mesh.setVerticesData(VertexBuffer.ColorKind, colorkind)
+}
+
+const applyCustomShader = (customMaterial) => {
+    const renderTarget = new RenderTargetTexture("customTexture", 256, scene)
+    customMaterial.setTexture("textureSampler", renderTarget)
+
+    scene.customRenderTargets.push(renderTarget)// stores render target texture from vertex colors
 
 }

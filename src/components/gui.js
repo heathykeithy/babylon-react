@@ -3,7 +3,7 @@ import { createCube, changeColor, screenPos, scaleAnimation, extrudeCap, faceCol
 import { GithubPicker } from 'react-color'
 import addcudeUI from '../assets/UI/AddCube.svg'
 import extrudeCapUI from '../assets/UI/ExtrudeCap.svg'
-import { Vector3 } from '@babylonjs/core'
+import { Color3, Vector3 } from '@babylonjs/core'
 
 
 
@@ -16,9 +16,10 @@ import { Vector3 } from '@babylonjs/core'
  * @returns 
  */
 
-const Gui = ({ scene, canvas }) => {
+const Controls = ({ scene, canvas }) => {
 
     const [selected, setSelected] = useState({})
+    const [faceSelected, setFaceSelected] = useState(null)
     const camera = scene.activeCamera
     const inputX = useRef(null)
     const inputY = useRef(null)
@@ -34,7 +35,6 @@ const Gui = ({ scene, canvas }) => {
         //click functions 
         scene.onPointerDown = (event, pickResult) => {
             if (pickResult.hit) {
-                console.log('Object clicked:', pickResult.pickedMesh.id)
                 if (event.inputIndex === 4) { //right click
                     //not used
                 }
@@ -52,11 +52,9 @@ const Gui = ({ scene, canvas }) => {
                                 boxDeselected(selected)
                                 setSelected(pickResult.pickedMesh)
                                 highlight(pickResult.pickedMesh)
+                            } else {
+                                setFaceSelected(pickResult.faceId)
                             }
-                            //clicking on already selected
-                            //get face
-                            faceColorChange(pickResult.pickedMesh, pickResult.faceId)
-                            console.log(pickResult.faceId) //TODO finish face changing
                         }
                         pointerDown(pickResult.pickedMesh)
                         mouseDownEvents(pickResult.pickedMesh)
@@ -66,6 +64,7 @@ const Gui = ({ scene, canvas }) => {
                             clearInputs()
                             boxDeselected(selected)
                             setSelected({})
+                            setFaceSelected(null)
                         }
                     }
                 }
@@ -140,7 +139,7 @@ const Gui = ({ scene, canvas }) => {
 
 
     const highlight = (mesh) => {
-        mesh.material.wireframe = true
+        mesh.edgesWidth = 12
     }
 
 
@@ -151,8 +150,7 @@ const Gui = ({ scene, canvas }) => {
     }
 
     const boxDeselected = (mesh) => {
-        mesh.material.wireframe = false
-
+        mesh.edgesWidth = 4.0
     }
 
     const destory = (mesh) => {
@@ -195,7 +193,13 @@ const Gui = ({ scene, canvas }) => {
         // console.log(JSON.stringify(scene))
     }
     const cloneObject = (copy) => {
-        const color = copy.material.albedoColor
+        let color
+        if (copy.material) {
+             color = copy.material.albedoColor
+        }
+        else{
+            color = new Color3(1,1,1)
+        }
         if (selected.id.includes("box")) {
             createCube(color, copy)
             setCount(count + 1)
@@ -204,6 +208,8 @@ const Gui = ({ scene, canvas }) => {
             extrudeCap(2, color, copy)
             setCapCount(capCount + 1)
         }
+
+
     }
 
     const addExtruded = (depth) => {
@@ -213,6 +219,10 @@ const Gui = ({ scene, canvas }) => {
 
     const handleCheckboxes = (value) => {
         setSelectedCheckbox(value)
+    }
+
+    const handleFaceChange = (color) => {
+        faceColorChange(selected, faceSelected, color)
     }
 
     const [selectedCheckbox, setSelectedCheckbox] = useState("surface");
@@ -234,7 +244,7 @@ const Gui = ({ scene, canvas }) => {
                 <img src={extrudeCapUI} alt='Extrude Cap +'></img>
             </button>
             <div className="dimensions" style={Object.entries(selected).length ?
-                { visibility: "visible", top: screenPos(selected)[1] + 80, left: screenPos(selected)[0] - 106 }
+                { visibility: "visible", top: screenPos(selected)[1] + 80, left: screenPos(selected)[0] - 120 }
                 : { visibility: "hidden" }}>
                 <h2>{selected.id}
                 </h2>
@@ -268,10 +278,17 @@ const Gui = ({ scene, canvas }) => {
                 <button onClick={() => cloneObject(selected)}
                 >Copy</button>
             </div>
+            <div className='face-popup' style={faceSelected != null && Object.entries(selected).length ? //if face selected and object selected
+                { visibility: "visible", top: screenPos(selected)[1] - 250, left: screenPos(selected)[0] - 120 }
+                : { visibility: "hidden" }}>
+                <h2>Face Color</h2>
+                <GithubPicker triangle='hide' onChangeComplete={handleFaceChange}  >
+                </GithubPicker>
+            </div>
 
 
         </div>
     )
 }
 
-export default Gui
+export default Controls

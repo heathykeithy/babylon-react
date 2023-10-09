@@ -138,7 +138,7 @@ body {
     border-top-right-radius: 0;
 }
 
-.dimensions {
+.dimensions, .face-popup {
     position: absolute;
     top: 1000px;
     left: 0;
