@@ -40,7 +40,7 @@ let scene = {}
 let shadowGenerator = {}
 let camera = {}
 let ssao = {}
-let shaderMaterial = {}
+let puff
 
 /**
  * 
@@ -58,7 +58,7 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
     let resizeTimeout
     let windowSize = []
     let orange = {}
-    
+
 
     const sceneBuild = (engine, canvas) => {
         //scene
@@ -107,14 +107,14 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         brown.albedoColor = new Color3(0.7, 0.1, 0)
 
         //custom shader
-        shaderMaterial = new ShaderMaterial("customShader", scene, "../shaders/custom", {
-            vertex: "custom",
-            fragment: "custom",
-        },
-            {
-                attributes: ["position", "normal", "color"],
-                uniforms: ["worldViewProjection"]
-            })
+        // shaderMaterial = new ShaderMaterial("customShader", scene, "../shaders/custom", {
+        //     vertex: "custom",
+        //     fragment: "custom",
+        // },
+        //     {
+        //         attributes: ["position", "normal", "color"],
+        //         uniforms: ["worldViewProjection"]
+        //     })
 
 
 
@@ -133,6 +133,27 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         skyboxMaterial.diffuseColor = new Color3(0, 0, 0)
         skyboxMaterial.specularColor = new Color3(0, 0, 0)
         skybox.material = skyboxMaterial
+
+        let starsCount = 0
+        puff = () => { //partical animation 
+            let particleSystem = new ParticleSystem("stars" + starsCount, 20000, scene)
+            particleSystem.particleTexture = new Texture(star, scene)
+            particleSystem.createPointEmitter(new Vector3(-1, 0, -1), new Vector3(1, 0.2, 1))
+            particleSystem.color1 = new Color4(0.51, 0.13, 0.13)
+            particleSystem.color2 = new Color4(1, 1, 1, 0)
+            particleSystem.colorDead = new Color4(1, 1, 1, 0)
+            particleSystem.emitRate = 6000
+            particleSystem.minEmitPower = 1
+            particleSystem.maxEmitPower = 20
+            particleSystem.addStartSizeGradient(1, 0.1)
+            particleSystem.minAngularSpeed = 0
+            particleSystem.maxAngularSpeed = 1
+            particleSystem.addDragGradient(0, 0.7, 0.7)
+            particleSystem.maxLifeTime = 0.001
+            particleSystem.targetStopDuration = 0.01
+            particleSystem.start()
+            starsCount++
+        }
 
 
         //resize engine render on window resize release
@@ -277,6 +298,8 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
 
     }
 
+    const [newpuff, setnewPuff] = useState(0)
+
     return (
         <div>
             <canvas
@@ -293,7 +316,6 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
                     <input type="checkbox" id="oa" name="oa" value="oa" checked={AO} onChange={() => AOHandler()}></input>
                     <label htmlFor="edge">Ambient Occlusion</label>
                 </div>
-
             </div>
             <p id="renderType">{webGL.current ? "Browser or GPU not supported, falling back to WebGL from WebGPU" : "Running on WebGPU"}</p>
         </div>
@@ -328,6 +350,8 @@ const addEdges = (mesh, clone) => {
 
 export let boxCounter = 0
 export let capCounter = 0
+
+
 
 export const createCube = (color, clone) => {
     const box = MeshBuilder.CreateBox("box " + boxCounter)
@@ -406,34 +430,27 @@ export const extrudeCap = (extValue, color, clone) => {
         myPath[i] = new Vector3(i, 0, 0)
     }
     const extrusion = MeshBuilder.ExtrudeShapeCustom("extruded" + capCounter, { shape: capShape, path: myPath, updatable: true, sideOrientation: Mesh.DOUBLESIDE })
-    extrusion.material = createMaterial(color, clone)
+
     addEdges(extrusion, clone)
     if (clone) {
         const { x, y, z } = clone.scaling
         extrusion.scaling = new Vector3(x, y, z)
+        if (!clone.material) {
+            copyVertData(clone, extrusion)
+        }
+        else {
+            extrusion.material = createMaterial(color, clone)
+        }
+    }
+    else {
+        extrusion.material = createMaterial(color, clone)
     }
     capCounter++
+    puff()
+
     return extrusion
 }
 
-const puff = () => { //partical animation 
-    let particleSystem = new ParticleSystem("stars", 1000, scene)
-    particleSystem.particleTexture = new Texture(star, scene)
-    particleSystem.createPointEmitter(new Vector3(-1, 0, -1), new Vector3(1, 0.2, 1))
-    particleSystem.color1 = new Color4(0.51, 0.13, 0.13)
-    particleSystem.color2 = new Color4(1, 1, 1, 0)
-    particleSystem.colorDead = new Color4(1, 1, 1, 0)
-    particleSystem.emitRate = 6000
-    particleSystem.minEmitPower = 1
-    particleSystem.maxEmitPower = 20
-    particleSystem.addStartSizeGradient(1, 0.1)
-    particleSystem.minAngularSpeed = 0
-    particleSystem.maxAngularSpeed = 1
-    particleSystem.addDragGradient(0, 0.7, 0.7)
-    particleSystem.maxLifeTime = 0.001
-    particleSystem.targetStopDuration = 0.01
-    particleSystem.start()
-}
 
 export const faceColorChange = (mesh, face, color) => {
     mesh.edgesWidth = 4.0
@@ -442,6 +459,7 @@ export const faceColorChange = (mesh, face, color) => {
     }
     const convertColor = Color3.FromHexString(color.hex)
     let indices = mesh.getIndices()
+    console.log(indices)
     let positions = mesh.getVerticesData(VertexBuffer.PositionKind)
     let colorkind = mesh.getVerticesData(VertexBuffer.ColorKind)
     let verts = positions.length / 3
@@ -453,22 +471,18 @@ export const faceColorChange = (mesh, face, color) => {
     let facet = 2 * Math.floor(face) //gets matching tris to make quad
     let clr = new Color4(convertColor.r, convertColor.g, convertColor.b, 1)
     let vertex
-    for (let i = 0; i < 6; i++) { //iterate through verts assigning values 
+    let totalfaces = indices.length / 3
+    //for (let i = 0; i < 6; i++) { //iterate through verts assigning values 
+    for (let i = 0; i < totalfaces; i++) { //iterate through verts assigning values 
         vertex = indices[3 * facet + i]
         colorkind[4 * vertex] = clr.r
         colorkind[4 * vertex + 1] = clr.g
         colorkind[4 * vertex + 2] = clr.b
         colorkind[4 * vertex + 3] = clr.a
     }
-     mesh.setVerticesData(VertexBuffer.ColorKind, colorkind)
+    mesh.setVerticesData(VertexBuffer.ColorKind, colorkind)
 
 
-    //     mesh.edgeRenderer.dispose(); // Dispose the existing edge renderer if it already exists
-    //     mesh.createEdgesRenderer(); // Recreate edges renderer
-    
-    
-    // mesh.enableEdgesRendering(); // Enable edges rendering on the mesh
-    // mesh.edgesColor = new Color4(1, 1, 1, 1);
 }
 
 
@@ -484,7 +498,7 @@ const copyVertData = (clone, mesh) => {
 
 const resetVertColors = (mesh) => {
     let colorkind = mesh.getVerticesData(VertexBuffer.ColorKind)
-    if (!colorkind){
+    if (!colorkind) {
         return
     }
     for (let i = 0; i < colorkind.length; i++) {
@@ -492,6 +506,7 @@ const resetVertColors = (mesh) => {
     }
     mesh.setVerticesData(VertexBuffer.ColorKind, colorkind)
 }
+
 
 const applyCustomShader = (customMaterial) => {
     const renderTarget = new RenderTargetTexture("customTexture", 256, scene)

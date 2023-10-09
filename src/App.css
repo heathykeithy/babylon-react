@@ -138,6 +138,12 @@ body {
     border-top-right-radius: 0;
 }
 
+.middle {
+    margin-top: 0;
+    margin-bottom: 0;
+    border-radius: 0;
+}
+
 .dimensions, .face-popup {
     position: absolute;
     top: 1000px;
@@ -202,3 +208,27 @@ h4 {
 input[type="checkbox"] {
     clip-path: circle(46% at 50% 50%);
 }
+
+.icon  {
+    width: 64px;
+  }
+
+.test {
+ 
+        position: absolute;
+        top: 0px;
+        right: 500px;
+        text-align: right;
+        background-color: #282c34;
+        border-bottom-left-radius: 10px;
+        border-top-left-radius: 10px;
+        border: 1px;
+        border-style: dashed;
+        opacity: 70%;
+        border-color: white;
+        border-right: none;
+        color: white;
+    
+    
+    
+  }

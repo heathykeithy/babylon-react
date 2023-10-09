@@ -3,6 +3,7 @@ import { createCube, changeColor, screenPos, scaleAnimation, extrudeCap, faceCol
 import { GithubPicker } from 'react-color'
 import addcudeUI from '../assets/UI/AddCube.svg'
 import extrudeCapUI from '../assets/UI/ExtrudeCap.svg'
+import refreshUI from '../assets/UI/arrows-rotate.svg'
 import { Color3, Vector3 } from '@babylonjs/core'
 
 
@@ -195,10 +196,10 @@ const Controls = ({ scene, canvas }) => {
     const cloneObject = (copy) => {
         let color
         if (copy.material) {
-             color = copy.material.albedoColor
+            color = copy.material.albedoColor
         }
-        else{
-            color = new Color3(1,1,1)
+        else {
+            color = new Color3(1, 1, 1)
         }
         if (selected.id.includes("box")) {
             createCube(color, copy)
@@ -208,13 +209,34 @@ const Controls = ({ scene, canvas }) => {
             extrudeCap(2, color, copy)
             setCapCount(capCount + 1)
         }
-
-
     }
 
     const addExtruded = (depth) => {
         extrudeCap(depth, mainColor)
         setCapCount(capCount + 1)
+    }
+
+
+
+    const deleteAll = () => {
+        let newObjects =[]
+        for (let i = 0; i < scene.meshes.length; i++) {
+            
+            if (scene.meshes[i].name.includes("extruded")){
+                newObjects.push(scene.meshes[i])
+            }
+            if (scene.meshes[i].name.includes("box"))
+            {
+                newObjects.push(scene.meshes[i])
+            }
+        }
+        console.log(newObjects)
+        newObjects.forEach(element => {
+            element.dispose()
+        })
+        //scene.meshes[i].dispose()
+        setCount(0)
+        setCapCount(0)
     }
 
     const handleCheckboxes = (value) => {
@@ -238,10 +260,16 @@ const Controls = ({ scene, canvas }) => {
                 <img src={addcudeUI} alt='Cube +'></img>
             </button>
             <button
-                className="buttonSN lower"
+                className="buttonSN middle"
                 onClick={() => addExtruded(2)}
             >{capCount + " "}
                 <img src={extrudeCapUI} alt='Extrude Cap +'></img>
+            </button>
+            <button
+                className="buttonSN lower "
+                onClick={() => deleteAll()}
+            >
+                <img className='icon' src={refreshUI} alt='Refreash'></img>
             </button>
             <div className="dimensions" style={Object.entries(selected).length ?
                 { visibility: "visible", top: screenPos(selected)[1] + 80, left: screenPos(selected)[0] - 120 }
