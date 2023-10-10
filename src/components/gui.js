@@ -30,6 +30,7 @@ const Controls = ({ scene, canvas }) => {
     const [count, setCount] = useState(0)
     const [capCount, setCapCount] = useState(0)
     const screenVector = useRef([0, 0])
+   
 
     useEffect(() => {
 
@@ -70,8 +71,10 @@ const Controls = ({ scene, canvas }) => {
                     }
                 }
             }
-
         }
+
+
+        
 
         const mouseDownEvents = (mesh) => {
             scene.onPointerUp = () => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import star from '../assets/solidStar.png'
 import sun from '../assets/sun.png'
-
+import { addObjects } from '../scripts/helpers.js'
 
 import {
     Engine,
@@ -29,18 +29,23 @@ import {
     VolumetricLightScatteringPostProcess,
     SSAORenderingPipeline,
     VertexBuffer,
+    TransformNode,
     GlowLayer,
     ShaderMaterial,
-    RenderTargetTexture
+    RenderTargetTexture,
+    HemisphericLight
 } from "@babylonjs/core"
 import "@babylonjs/loaders"
 
+
+const debug = true
 
 let scene = {}
 let shadowGenerator = {}
 let camera = {}
 let ssao = {}
 let puff
+
 
 /**
  * 
@@ -63,6 +68,11 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
     const sceneBuild = (engine, canvas) => {
         //scene
         scene = new Scene(engine)
+        if (debug) {
+            console.warn("Debug enabled, scene is exposed at window.scene")
+            window.scene = scene
+        }
+
         babScene(scene)
         //camera
         camera = new ArcRotateCamera("camera", Tools.ToRadians(45), Tools.ToRadians(65), 10, Vector3.Zero(), scene)
@@ -74,6 +84,8 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         const light = new DirectionalLight("dir01", new Vector3(-1, -2, 1), scene)
         light.position = new Vector3(60, 130, -65)
         light.intensity = 1
+
+        const areaLight = new HemisphericLight("hLight", new Vector3(0, 1, 0), scene)
 
         //glow
         // const glow = new GlowLayer("glow", scene)
@@ -95,6 +107,8 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         //shadows
         shadowGenerator = new ShadowGenerator(1024, light)
         shadowGenerator.useExponentialShadowMap = true
+        // shadowGenerator.setDarkness(0.5)
+
 
         //materials
         let pbr = new PBRMaterial()
@@ -266,16 +280,16 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
 
     const [vol, setVol] = useState(false)
     const [AO, setAO] = useState(false)
+    const [shadows, setShadows] = useState(true)
+    const [shadowDarkness, setShadowDarkness] = useState(0.5)
     let rays = null
     const volumetricsHandler = () => {
-
         if (!vol) {
             rays = new VolumetricLightScatteringPostProcess('rays', 1.0, camera, null, 100, Texture.BILINEAR_SAMPLINGMODE, scene.engine, false)
             rays.mesh.material.diffuseTexture = new Texture(sun, scene, true, false, Texture.BILINEAR_SAMPLINGMODE)
             rays.mesh.material.diffuseTexture.hasAlpha = true
             rays.mesh.scaling = new Vector3(30, 30, 30)
             rays.mesh.position = scene.lights[0].position
-
         }
         else {
             if (rays) {
@@ -285,6 +299,7 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
         }
         setVol(!vol)
     }
+
     const AOHandler = () => {
         if (AO) { //detach AO
             scene.postProcessRenderPipelineManager.detachCamerasFromRenderPipeline("ssao", camera)
@@ -295,10 +310,18 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
             scene.postProcessRenderPipelineManager.enableEffectInPipeline("ssao", ssao.SSAOCombineRenderEffect, camera)
         }
         setAO(!AO)
-
     }
 
-    const [newpuff, setnewPuff] = useState(0)
+    const shadowHandler = () => {
+        scene.shadowsEnabled = !shadows
+        setShadows(!shadows)
+    }
+
+    const darknessHandler = (value) => {
+        value = 100 - value
+        setShadowDarkness(value / 100)
+        shadowGenerator.setDarkness(shadowDarkness)
+    }
 
     return (
         <div>
@@ -316,8 +339,20 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
                     <input type="checkbox" id="oa" name="oa" value="oa" checked={AO} onChange={() => AOHandler()}></input>
                     <label htmlFor="edge">Ambient Occlusion</label>
                 </div>
+                <div className='postprocess-option'>
+                    <input type="checkbox" id="shadows" name="shadows" value="shadows" checked={shadows} onChange={shadowHandler}></input>
+                    <label htmlFor="edge">Shadows</label>
+                    <div class="slidecontainer" >
+                        <input type="range" min="1" max="100" class="slider" disabled={!shadows} id="myRange" onChange={(event) => darknessHandler(event.target.value)}></input>
+                    </div>
+                </div>
             </div>
             <p id="renderType">{webGL.current ? "Browser or GPU not supported, falling back to WebGL from WebGPU" : "Running on WebGPU"}</p>
+            <div className='version'>
+                {/* <img src={logo} alt='logo'></img> */}
+                <p id="version">Configurator v0.0.2</p>
+            </div>
+
         </div>
     )
 }
@@ -374,6 +409,7 @@ export const createCube = (color, clone) => {
     shadowGenerator.addShadowCaster(box)
     boxCounter++
     puff()
+   // createLines(box)
     return box
 }
 
@@ -505,6 +541,48 @@ const resetVertColors = (mesh) => {
         colorkind[i] = 1
     }
     mesh.setVerticesData(VertexBuffer.ColorKind, colorkind)
+}
+
+const createLines = (mesh, axis, offset) => {
+    //create line for each axis of scaling
+    //offset on axis 
+    //axis method
+    //attach to mesh as child 
+    //optional- split line to fit text 
+
+
+    const lowerline = [
+        new Vector3(0, -0.5, 0),
+        new Vector3(0, -0.2, 0),
+    ]
+    const upperline = [
+        new Vector3(0, 0.2, 0),
+        new Vector3(0, 0.5, 0),
+
+    ]
+    const capline = (ypos) => {
+        const cap = [
+            new Vector3(-0.1, ypos, 0),
+            new Vector3(0.1, ypos, 0),
+        ]
+        return cap
+    }
+    const lines = MeshBuilder.CreateLines("lines", { points: lowerline });
+    const lines2 = MeshBuilder.CreateLines("lines2", { points: upperline });
+    const bottomcap = MeshBuilder.CreateLines("lines2", { points: capline(-0.5) });
+    const topcap = MeshBuilder.CreateLines("lines2", { points: capline(0.5) });
+    const trans = new TransformNode('parent', scene)
+    const grouplines = [lines, lines2, bottomcap, topcap]
+
+    grouplines.forEach((i) => i.parent = trans)
+    const tempoffset = new Vector3(1, 0, 0.5)
+    const addedpos = addObjects(mesh.position, tempoffset)// + tempoffset
+    trans.position = addedpos
+}
+
+const lineText = (parent, text) => {
+    //create text that updates with scale of parent
+    //child of line
 }
 
 

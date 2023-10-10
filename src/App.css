@@ -47,11 +47,23 @@ body {
     color: white;
 }
 
+.version {
+    position: absolute;
+    bottom: 0;
+    left: 20px;
+    width: 50vw;
+    text-align: left;
+    color: white;
+    font-size: 8px;
+}
+
+
+
 .settings {
     position: absolute;
     top: 10px;
     right: 0px;
-    text-align: right;
+    text-align: left;
     background-color: #282c34;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
@@ -61,13 +73,16 @@ body {
     border-color: white;
     border-right: none;
     color: white;
-
 }
 
 .settings button {
     width: 150px;
     padding: 3px;
 }
+
+.slidecontainer input {
+    width: 100%;
+} 
 
 .postprocess-option {
     display: block;
