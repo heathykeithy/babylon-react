@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { createCube, changeColor, screenPos, scaleAnimation, extrudeCap, faceColorChange, setlines } from '../scripts/setup'
+import { createCube, changeColor, screenPos, scaleAnimation, extrudeCap, faceColorChange, updateLinesPositions,updateText } from '../scripts/setup'
 import { GithubPicker } from 'react-color'
 import addcudeUI from '../assets/UI/AddCube.svg'
 import extrudeCapUI from '../assets/UI/ExtrudeCap.svg'
@@ -82,6 +82,7 @@ const Controls = ({ scene, canvas }) => {
             }
             scene.onPointerMove = () => {
                 pointerMove(mesh)
+                updateLinesPositions(mesh)
             }
         }
 
@@ -174,6 +175,27 @@ const Controls = ({ scene, canvas }) => {
 
         const offset = 0.5
 
+        // if (value === '' || value == 0) {
+        //     value = parseFloat(0.1)
+        // }
+        // value = parseFloat(value)
+        // const property = "scaling." + axis
+        // //const propertyPos = "position." + axis
+        // //mesh
+        // scaleAnimation(selected, property, selected.scaling[axis], value)
+
+
+        // //lines scale
+        // scaleAnimation(selected.lines[axis], property, selected.scaling[axis], value)
+        // //lines posistion
+        // updateLinesPositions(currentMesh.current)
+        // updateText(selected.lines[axis].text, value + "m")
+
+        // if (axis === 'y') {
+
+        //     selected.position.y = value / 2 //keep box on the ground
+        // }
+
         if (value === '' || value == 0) {
             value = parseFloat(0.1)
         }
@@ -181,30 +203,20 @@ const Controls = ({ scene, canvas }) => {
         const property = "scaling." + axis
         //const propertyPos = "position." + axis
         //mesh
-        scaleAnimation(selected, property, selected.scaling[axis], value)
+        scaleAnimation(currentMesh.current, property, currentMesh.current.scaling[axis], value)
 
 
         //lines scale
-        scaleAnimation(selected.lines[axis], property, selected.scaling[axis], value)
+        scaleAnimation(currentMesh.current.lines[axis], property, currentMesh.current.scaling[axis], value)
         //lines posistion
-        selected.lines.x.position.copyFrom(selected.position.add(new Vector3(0, (selected.scaling.y / 2) + offset, (-selected.scaling.z / 2) + offset)))
-        selected.lines.y.position.copyFrom(selected.position.add(new Vector3(selected.scaling.x / 2 - offset, -offset, 0))) //TODO fix  delay 
-        selected.lines.z.position.copyFrom(selected.position.add(new Vector3(-selected.scaling.x/2+ 0.5, selected.scaling.y / 2 + offset, 0))) //TODO z is unresponsive 
-        console.log(selected.scaling.y)
-        console.log(selected.lines.z.position)
+        updateLinesPositions(currentMesh.current)
+        updateText(currentMesh.current.lines[axis].text, value + "m")
+
         if (axis === 'y') {
 
-            selected.position.y = value / 2 //keep box on the ground
+            currentMesh.current.position.y = value / 2 //keep box on the ground
         }
-        //setlines(selected, false, true)
 
-        // if(axis === 'x'){
-        //    // selected.lines[axis].position.copyFrom(selected.position.add(new Vector3(selected.scaling.x/2- 0.5,-0.5,0)))
-
-        // }
-        // else{
-        //     scaleAnimation(selected.lines[axis], propertyPos, selected.lines[axis].position[axis], value/2)//TODO fix this mess
-        // }
 
     }
 

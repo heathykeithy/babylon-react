@@ -29,6 +29,7 @@ import {
     VolumetricLightScatteringPostProcess,
     SSAORenderingPipeline,
     VertexBuffer,
+    DynamicTexture,
     TransformNode,
     GlowLayer,
     ShaderMaterial,
@@ -571,18 +572,35 @@ const createLines = (mesh, ext, offset=0.6) => {
     //create line for each axis of scaling
     //offset on axis 
 
+    // const lineX = [
+    //     new Vector3(-0.5, offset, -offset),
+    //     new Vector3(0.5, offset, -offset),
+    // ]
+    // const lineY = [ //HACK if extusion + half size (temp fix)
+    //     new Vector3(offset, ext? 0: -0.5, -offset),
+    //     new Vector3(offset, 0.5, -offset),
+    // ]
+    // const lineZ = [
+    //     new Vector3(-offset, offset, -0.5),
+    //     new Vector3(-offset, offset, 0.5),
+    // ]
+
     const lineX = [
-        new Vector3(-0.5, offset, -offset),
-        new Vector3(0.5, offset, -offset),
+        new Vector3(-0.5, 0, -0),
+        new Vector3(0.5, 0, -0),
     ]
     const lineY = [ //HACK if extusion + half size (temp fix)
-        new Vector3(offset, ext? 0: -0.5, -offset),
-        new Vector3(offset, 0.5, -offset),
+        new Vector3(0, ext? 0: -0.5, -0),
+        new Vector3(0, 0.5, -0),
     ]
     const lineZ = [
-        new Vector3(-offset, offset, -0.5),
-        new Vector3(-offset, offset, 0.5),
+        new Vector3(-0, 0, -0.5),
+        new Vector3(-0, 0, 0.5),
     ]
+
+
+
+
     // const capline = (ypos) => {
     //     const cap = [
     //         new Vector3(-0.1, ypos, 0),
@@ -595,7 +613,12 @@ const createLines = (mesh, ext, offset=0.6) => {
     lineGroup.x = MeshBuilder.CreateLines("lines", { points: lineX });
     lineGroup.y = MeshBuilder.CreateLines("lines2", { points: lineY });
     lineGroup.z = MeshBuilder.CreateLines("lines3", { points: lineZ });
+    
     mesh.lines = lineGroup //add lines directly to mesh object but not parented
+    mesh.lines.x.text = lineText("X", mesh.lines.x.position, new Vector3(1,1,1))
+    mesh.lines.y.text = lineText("Y", mesh.lines.y.position, new Vector3(1,1,1))
+    mesh.lines.z.text = lineText("Z", mesh.lines.z.position, new Vector3(1,1,1))
+
     setlines(mesh, true, true)
     
 }
@@ -617,8 +640,12 @@ export const setlines=(mesh, scale)=>{
     }
     
     mesh.lines.x.position.copyFrom(mesh.position.add(new Vector3(ext? mesh.scaling.x/2 : 0, 0 ,(-mesh.scaling.z/2)+ 0.5)))
+
+
     mesh.lines.y.position.copyFrom(mesh.position.add(new Vector3(ext? mesh.scaling.x -0.5: (mesh.scaling.x/2)- 0.5),0,0))
     mesh.lines.z.position.copyFrom(mesh.position.add(new Vector3(ext? +0.5: (-mesh.scaling.x/2)+ 0.5),0,0))        
+
+
     
     if(scale){
     mesh.lines.x.scaling.x = mesh.scaling.x 
@@ -628,11 +655,37 @@ export const setlines=(mesh, scale)=>{
 
 }
 
-const lineText = (parent, text) => {
-    //create text that updates with scale of parent
-    //child of line
+export const updateLinesPositions= (selected) =>{
+    const offset = 0.5
+    selected.lines.x.position.copyFrom(selected.position.add(new Vector3(0, (selected.scaling.y / 2) + offset , (-selected.scaling.z / 2) + offset)))
+    selected.lines.z.position.copyFrom(selected.position.add(new Vector3(-selected.scaling.x / 2 + offset, selected.scaling.y / 2 + offset, 0)))
+    selected.lines.y.position.copyFrom(selected.position.add(new Vector3(selected.scaling.x / 2 - offset, offset, (-selected.scaling.z / 2) + offset))) //TODO fix  delay 
+
 }
 
+const lineText = (text, posistion, size) => {
+        //data reporter
+        const outputplane = Mesh.CreatePlane("outputplane", Math.max(size.x, size.y, size.z), scene, false);
+        outputplane.material = new StandardMaterial("outputplane", scene);
+        outputplane.position = posistion
+        outputplane.billboardMode = Mesh.BILLBOARDMODE_ALL;
+        var outputplaneTexture = new DynamicTexture("dynamic texture", 512, scene, true);
+        outputplane.material.diffuseTexture = outputplaneTexture;
+        outputplane.material.specularColor = new Color3(0, 0, 0);
+        outputplane.material.emissiveColor = new Color3(1, 1, 1);
+        outputplane.material.backFaceCulling = false;
+        outputplaneTexture.drawText(text, null, 240, "bold 80px verdana", "#111");
+        outputplaneTexture.hasAlpha = true;
+        return outputplane;
+}
+
+export const updateText= (textMesh, text) =>{
+    let newtext = new DynamicTexture("dynamic texture", 512, scene, true);
+    newtext.drawText(text, null, 240, "bold 80px verdana", "#111")
+    newtext.hasAlpha = true;
+    textMesh.material.diffuseTexture.dispose()
+    textMesh.material.diffuseTexture = newtext
+}
 
 // const applyCustomShader = (customMaterial) => {
 //     const renderTarget = new RenderTargetTexture("customTexture", 256, scene)
