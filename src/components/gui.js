@@ -171,28 +171,40 @@ const Controls = ({ scene, canvas }) => {
 
 
     const scale = (axis, value) => {
-        
+
+        const offset = 0.5
+
         if (value === '' || value == 0) {
             value = parseFloat(0.1)
         }
         value = parseFloat(value)
         const property = "scaling." + axis
-        const propertyPos = "position." + axis
+        //const propertyPos = "position." + axis
         //mesh
         scaleAnimation(selected, property, selected.scaling[axis], value)
+
 
         //lines scale
         scaleAnimation(selected.lines[axis], property, selected.scaling[axis], value)
         //lines posistion
-        
-        //setlines(selected, false, true)
+        selected.lines.x.position.copyFrom(selected.position.add(new Vector3(0, (selected.scaling.y / 2) + offset, (-selected.scaling.z / 2) + offset)))
+        selected.lines.y.position.copyFrom(selected.position.add(new Vector3(selected.scaling.x / 2 - offset, -offset, 0))) //TODO fix  delay 
+        selected.lines.z.position.copyFrom(selected.position.add(new Vector3(-selected.scaling.x/2+ 0.5, selected.scaling.y / 2 + offset, 0))) //TODO z is unresponsive 
+        console.log(selected.scaling.y)
+        console.log(selected.lines.z.position)
         if (axis === 'y') {
-            selected.lines[axis].position.copyFrom(selected.position.add(new Vector3(selected.scaling.x/2- 0.5,-0.5,0))) //TODO fix y delay 
+
             selected.position.y = value / 2 //keep box on the ground
         }
-        else{
-            scaleAnimation(selected.lines[axis], propertyPos, selected.scaling[axis]/2, value/2)//TODO fix this mess
-        }
+        //setlines(selected, false, true)
+
+        // if(axis === 'x'){
+        //    // selected.lines[axis].position.copyFrom(selected.position.add(new Vector3(selected.scaling.x/2- 0.5,-0.5,0)))
+
+        // }
+        // else{
+        //     scaleAnimation(selected.lines[axis], propertyPos, selected.lines[axis].position[axis], value/2)//TODO fix this mess
+        // }
 
     }
 
