@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { createCube, changeColor, screenPos, scaleAnimation, extrudeCap, faceColorChange } from '../scripts/setup'
+import { createCube, changeColor, screenPos, scaleAnimation, extrudeCap, faceColorChange, setlines } from '../scripts/setup'
 import { GithubPicker } from 'react-color'
 import addcudeUI from '../assets/UI/AddCube.svg'
 import extrudeCapUI from '../assets/UI/ExtrudeCap.svg'
@@ -30,7 +30,7 @@ const Controls = ({ scene, canvas }) => {
     const [count, setCount] = useState(0)
     const [capCount, setCapCount] = useState(0)
     const screenVector = useRef([0, 0])
-   
+
 
     useEffect(() => {
 
@@ -74,7 +74,7 @@ const Controls = ({ scene, canvas }) => {
         }
 
 
-        
+
 
         const mouseDownEvents = (mesh) => {
             scene.onPointerUp = () => {
@@ -171,14 +171,29 @@ const Controls = ({ scene, canvas }) => {
 
 
     const scale = (axis, value) => {
+        
         if (value === '' || value == 0) {
-            value = 0.1
+            value = parseFloat(0.1)
         }
+        value = parseFloat(value)
         const property = "scaling." + axis
+        const propertyPos = "position." + axis
+        //mesh
         scaleAnimation(selected, property, selected.scaling[axis], value)
+
+        //lines scale
+        scaleAnimation(selected.lines[axis], property, selected.scaling[axis], value)
+        //lines posistion
+        
+        //setlines(selected, false, true)
         if (axis === 'y') {
+            selected.lines[axis].position.copyFrom(selected.position.add(new Vector3(selected.scaling.x/2- 0.5,-0.5,0))) //TODO fix y delay 
             selected.position.y = value / 2 //keep box on the ground
         }
+        else{
+            scaleAnimation(selected.lines[axis], propertyPos, selected.scaling[axis]/2, value/2)//TODO fix this mess
+        }
+
     }
 
     const [mainColor, setMainColor] = useState("#1273de")
@@ -222,22 +237,17 @@ const Controls = ({ scene, canvas }) => {
 
 
     const deleteAll = () => {
-        let newObjects =[]
+        let newObjects = []
+        const keywords = ["extruded", "box", "lines"];
+        //group all added objects by name 
         for (let i = 0; i < scene.meshes.length; i++) {
-            
-            if (scene.meshes[i].name.includes("extruded")){
-                newObjects.push(scene.meshes[i])
-            }
-            if (scene.meshes[i].name.includes("box"))
-            {
+            if (keywords.some(keyword => scene.meshes[i].name.includes(keyword))) {
                 newObjects.push(scene.meshes[i])
             }
         }
-        console.log(newObjects)
         newObjects.forEach(element => {
             element.dispose()
         })
-        //scene.meshes[i].dispose()
         setCount(0)
         setCapCount(0)
     }
@@ -284,6 +294,7 @@ const Controls = ({ scene, canvas }) => {
                     <input id="inputX" type='number'
                         placeholder={Object.entries(selected).length ? selected.scaling.x : 1}
                         ref={inputX} aria-label='X'
+                        // onChange={(e) => scale('x', e.target.value)}
                         onChange={(e) => scale('x', e.target.value)}
                     >
                     </input>

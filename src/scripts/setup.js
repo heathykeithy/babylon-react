@@ -442,7 +442,7 @@ export const screenPos = (box) => {
     return xy
 }
 
-export const scaleAnimation = (box, axis, start, end) => {
+export const scaleAnimation = (mesh, axis, start, end) => {
     const lerpscaling = new Animation("lerpscaling", axis, 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CONSTANT)
     const keyFrames = []
     keyFrames.push({
@@ -454,8 +454,8 @@ export const scaleAnimation = (box, axis, start, end) => {
         value: parseFloat(end) //end value
     })
     lerpscaling.setKeys(keyFrames)
-    box.animations.push(lerpscaling) //pass in object
-    scene.beginAnimation(box, 0, 2 * 30, true)
+    mesh.animations.push(lerpscaling) //pass in object
+    scene.beginAnimation(mesh, 0, 2 * 30, true)
 }
 
 /**
@@ -596,7 +596,7 @@ const createLines = (mesh, ext, offset=0.6) => {
     lineGroup.y = MeshBuilder.CreateLines("lines2", { points: lineY });
     lineGroup.z = MeshBuilder.CreateLines("lines3", { points: lineZ });
     mesh.lines = lineGroup //add lines directly to mesh object but not parented
-    setlines(mesh, true, true, ext)
+    setlines(mesh, true, true)
     
 }
 
@@ -604,26 +604,26 @@ const createLines = (mesh, ext, offset=0.6) => {
 /**
  * Updates the position and scaling properties of the lines object based on the provided mesh.
  * @param {object} mesh - The mesh object serving as a reference.
- * @param {boolean} moving - A flag indicating whether the lines should move with the mesh.
  * @param {boolean} scale - A flag indicating whether the lines should scale with the mesh.
- * @param {boolean} ext - is Extrusion
  */
-export const setlines=(mesh, moving, scale, ext)=>{
+export const setlines=(mesh, scale)=>{
+    let ext
+    //TODO update on scale
     if(mesh.id.includes("extruded")){
         ext = true
     }
     if(!mesh.lines){
         throw console.error("Lines not attached to mesh: "+ mesh.name);
     }
-    if(moving){
+    
     mesh.lines.x.position.copyFrom(mesh.position.add(new Vector3(ext? mesh.scaling.x/2 : 0, 0 ,(-mesh.scaling.z/2)+ 0.5)))
     mesh.lines.y.position.copyFrom(mesh.position.add(new Vector3(ext? mesh.scaling.x -0.5: (mesh.scaling.x/2)- 0.5),0,0))
     mesh.lines.z.position.copyFrom(mesh.position.add(new Vector3(ext? +0.5: (-mesh.scaling.x/2)+ 0.5),0,0))        
-    }
+    
     if(scale){
     mesh.lines.x.scaling.x = mesh.scaling.x 
-    mesh.lines.x.scaling.y = mesh.scaling.y 
-    mesh.lines.x.scaling.z = mesh.scaling.z  
+    mesh.lines.y.scaling.y = mesh.scaling.y 
+    mesh.lines.z.scaling.z = mesh.scaling.z  
     }
 
 }
