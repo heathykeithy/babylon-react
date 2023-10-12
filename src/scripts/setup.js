@@ -458,11 +458,18 @@ export const scaleAnimation = (box, axis, start, end) => {
     scene.beginAnimation(box, 0, 2 * 30, true)
 }
 
-export const extrudeCap = (extValue, color, clone) => {
+/**
+ * Creates an extruded cap mesh based on a predefined shape and a given path.
+ * @param {number} extValue - The length of the extrusion path.
+ * @param {object} color - The color object specifying the color of the extruded cap.
+ * @param {object} clone - The mesh object to which the extruded cap will be attached.
+ * @returns {object} - The generated extruded cap mesh.
+ */
+export const extrudeCap = (extValue = 1, color, clone) => {
     const capShape = [ //create V shape
-        new Vector3(-1, 0, 0),
+        new Vector3(-0.5, 0, 0),
         new Vector3(0, 0.5, 0),
-        new Vector3(1, 0, 0),
+        new Vector3(0.5, 0, 0),
     ]
     const myPath = [] //extend path from UI
     for (let i = 0; i < extValue; i++) {
@@ -484,13 +491,19 @@ export const extrudeCap = (extValue, color, clone) => {
     else {
         extrusion.material = createMaterial(color, clone)
     }
+    extrusion.position.y = extrusion.scaling.y/2
     capCounter++
     puff()
-
+    createLines(extrusion, true)
     return extrusion
 }
 
-
+/**
+ * Changes the color of a specific face on a given mesh.
+ * @param {object} mesh - The mesh object to which the color change will be applied.
+ * @param {number} face - The index of the face on the mesh to be colored.
+ * @param {object} color - The color object specifying the new color for the face.
+ */
 export const faceColorChange = (mesh, face, color) => {
     mesh.edgesWidth = 4.0
     if (mesh.material) {
@@ -520,21 +533,22 @@ export const faceColorChange = (mesh, face, color) => {
         colorkind[4 * vertex + 3] = clr.a
     }
     mesh.setVerticesData(VertexBuffer.ColorKind, colorkind)
-
-
 }
 
-
+/**
+ * Copies vertex color data from a source mesh (clone) to a target mesh.
+ * @param {object} clone - The source mesh containing vertex color data to be copied.
+ * @param {object} mesh - The target mesh to which vertex color data will be applied.
+ */
 const copyVertData = (clone, mesh) => {
-    // clone.material = shaderMaterial
-    // applyCustomShader(clone.material)
-    // resetVertColors(mesh)
-    // mesh.material = clone.material
-
-    let colorkind = clone.getVerticesData(VertexBuffer.ColorKind)
+     let colorkind = clone.getVerticesData(VertexBuffer.ColorKind)
     mesh.setVerticesData(VertexBuffer.ColorKind, colorkind)
 }
 
+/**
+ * Resets the vertex colors of a mesh to their default values.
+ * @param {object} mesh - The mesh object whose vertex colors need to be reset.
+ */
 const resetVertColors = (mesh) => {
     let colorkind = mesh.getVerticesData(VertexBuffer.ColorKind)
     if (!colorkind) {
@@ -546,22 +560,23 @@ const resetVertColors = (mesh) => {
     mesh.setVerticesData(VertexBuffer.ColorKind, colorkind)
 }
 
-const createLines = (mesh, axis, offset) => {
+
+/**
+ * Creates lines representing the X, Y, and Z axes of a mesh and sets their positions and scaling.
+ * @param {object} mesh - The mesh object for which axes lines are created.
+ * @param {boolean} ext - is Extrusion?
+ * @param {number} offset - Offset value for positioning the lines on the axes.
+ */
+const createLines = (mesh, ext, offset=0.6) => {
     //create line for each axis of scaling
     //offset on axis 
-    //axis method
-    //attach to mesh as child 
-    //optional- split line to fit text 
 
-    if(!offset){
-        offset = 0.6
-    }
     const lineX = [
         new Vector3(-0.5, offset, -offset),
         new Vector3(0.5, offset, -offset),
     ]
-    const lineY = [
-        new Vector3(offset, -0.5, -offset),
+    const lineY = [ //HACK if extusion + half size (temp fix)
+        new Vector3(offset, ext? 0: -0.5, -offset),
         new Vector3(offset, 0.5, -offset),
     ]
     const lineZ = [
@@ -575,34 +590,42 @@ const createLines = (mesh, axis, offset) => {
     //     ]
     //     return cap
     // }
-    const dataObject = {}
-    const lines = MeshBuilder.CreateLines("lines", { points: lineX });
-    const lines2 = MeshBuilder.CreateLines("lines2", { points: lineY });
-    const lines3 = MeshBuilder.CreateLines("lines3", { points: lineZ });
-   // const bottomcap = MeshBuilder.CreateLines("lines2", { points: capline(-0.5) });
-    //const topcap = MeshBuilder.CreateLines("lines2", { points: capline(0.5) });
-    const trans = new TransformNode('parent', scene)
-    //const grouplines = [lines, lines2, bottomcap, topcap]
-    const grouplines = [lines, lines2, lines3]
+    mesh.scaling.x = 10
+    const lineGroup = {}
+    lineGroup.x = MeshBuilder.CreateLines("lines", { points: lineX });
+    lineGroup.y = MeshBuilder.CreateLines("lines2", { points: lineY });
+    lineGroup.z = MeshBuilder.CreateLines("lines3", { points: lineZ });
+    mesh.lines = lineGroup //add lines directly to mesh object but not parented
+    setlines(mesh, true, true, ext)
+    
+}
 
-   // box2.position.copyFrom(box1.position.add(new BABYLON.Vector3(1,1,1)))
 
-    dataObject.x = lines
-   // const xPos = new Vector3(mesh.position.x +  (mesh.scaling.x /2),
-   // mesh.position.y, mesh.position.z)
-   
-   //dataObject.x.position.x = mesh.position.x +  (mesh.scaling.x /2)
-   mesh.scaling.z = 10
-   dataObject.x.position.copyFrom(mesh.position.add(new Vector3(0,0,(-mesh.scaling.z/2)+ 0.5)))
-    console.log(dataObject.x.position)
-    console.log(mesh.position.x)
-    console.log(mesh.scaling.x /2)
-    //grouplines.forEach((i) => i.parent = trans)
-    //const tempoffset = new Vector3(1, 0, 0.5)
-    //const addedpos = addObjects(mesh.position, tempoffset)// + tempoffset
-    //trans.position.y = 0.5
-   // trans.position = addedpos
-   // trans.parent = mesh
+/**
+ * Updates the position and scaling properties of the lines object based on the provided mesh.
+ * @param {object} mesh - The mesh object serving as a reference.
+ * @param {boolean} moving - A flag indicating whether the lines should move with the mesh.
+ * @param {boolean} scale - A flag indicating whether the lines should scale with the mesh.
+ * @param {boolean} ext - is Extrusion
+ */
+export const setlines=(mesh, moving, scale, ext)=>{
+    if(mesh.id.includes("extruded")){
+        ext = true
+    }
+    if(!mesh.lines){
+        throw console.error("Lines not attached to mesh: "+ mesh.name);
+    }
+    if(moving){
+    mesh.lines.x.position.copyFrom(mesh.position.add(new Vector3(ext? mesh.scaling.x/2 : 0, 0 ,(-mesh.scaling.z/2)+ 0.5)))
+    mesh.lines.y.position.copyFrom(mesh.position.add(new Vector3(ext? mesh.scaling.x -0.5: (mesh.scaling.x/2)- 0.5),0,0))
+    mesh.lines.z.position.copyFrom(mesh.position.add(new Vector3(ext? +0.5: (-mesh.scaling.x/2)+ 0.5),0,0))        
+    }
+    if(scale){
+    mesh.lines.x.scaling.x = mesh.scaling.x 
+    mesh.lines.x.scaling.y = mesh.scaling.y 
+    mesh.lines.x.scaling.z = mesh.scaling.z  
+    }
+
 }
 
 const lineText = (parent, text) => {
@@ -611,51 +634,49 @@ const lineText = (parent, text) => {
 }
 
 
-const applyCustomShader = (customMaterial) => {
-    const renderTarget = new RenderTargetTexture("customTexture", 256, scene)
-    customMaterial.setTexture("textureSampler", renderTarget)
+// const applyCustomShader = (customMaterial) => {
+//     const renderTarget = new RenderTargetTexture("customTexture", 256, scene)
+//     customMaterial.setTexture("textureSampler", renderTarget)
+//     scene.customRenderTargets.push(renderTarget)// stores render target texture from vertex colors
+// }
 
-    scene.customRenderTargets.push(renderTarget)// stores render target texture from vertex colors
-
-}
-
-const createDimentions  = (mesh,bounding, offset) => {
-    const meshPosCenter = bounding.centerWorld.add(mesh.position);
-    const meshSize = bounding.extendSizeWorld.add(mesh.position);
-    const bbv = bounding.vectorsWorld
-    console.log(bounding.vectorsWorld[5])
-    console.log(bounding.vectorsWorld)
+// const createDimentions  = (mesh,bounding, offset) => {
+//     const meshPosCenter = bounding.centerWorld.add(mesh.position);
+//     const meshSize = bounding.extendSizeWorld.add(mesh.position);
+//     const bbv = bounding.vectorsWorld
+//     console.log(bounding.vectorsWorld[5])
+//     console.log(bounding.vectorsWorld)
 
 
-    //TODO add offset to line using helper script 
-    let xLine = [bbv[3], bbv[5]]
-    let yLine = [bbv[5], bbv[2]]
-    let zLine = [bbv[3], bbv[6]]
+//     //TODO add offset to line using helper script 
+//     let xLine = [bbv[3], bbv[5]]
+//     let yLine = [bbv[5], bbv[2]]
+//     let zLine = [bbv[3], bbv[6]]
 
-    const lineCoordinates = [xLine, yLine, zLine];
+//     const lineCoordinates = [xLine, yLine, zLine];
 
-    const dimensionLines = MeshBuilder.CreateLineSystem("Lines", { lines: lineCoordinates, updatable: true }, scene);
-    dimensionLines.color = new Color3(1, 1, 1);
+//     const dimensionLines = MeshBuilder.CreateLineSystem("Lines", { lines: lineCoordinates, updatable: true }, scene);
+//     dimensionLines.color = new Color3(1, 1, 1);
     
 
-   window.lines = dimensionLines
-    const linesP =  new TransformNode("linesp", scene)
-    dimensionLines.parent = linesP
-    //linesP.position.y  = mesh.position.y
-    console.log(dimensionLines.position.y)
+//    window.lines = dimensionLines
+//     const linesP =  new TransformNode("linesp", scene)
+//     dimensionLines.parent = linesP
+//     //linesP.position.y  = mesh.position.y
+//     console.log(dimensionLines.position.y)
 
-    if(!offset){
-        offset = 0.25
-    }
+//     if(!offset){
+//         offset = 0.25
+//     }
 
-    let xtextpos = new Vector3(meshPosCenter.x, meshSize.y + offset, bbv[3].z)
-    let ytextpos = new Vector3(meshSize.x + offset, meshPosCenter.y, bbv[5].z)
-    let ztextpos = new Vector3(bbv[3].x, meshSize.y + offset, meshPosCenter.z)
+//     let xtextpos = new Vector3(meshPosCenter.x, meshSize.y + offset, bbv[3].z)
+//     let ytextpos = new Vector3(meshSize.x + offset, meshPosCenter.y, bbv[5].z)
+//     let ztextpos = new Vector3(bbv[3].x, meshSize.y + offset, meshPosCenter.z)
 
-    const textplaceholderx = MeshBuilder.CreateBox("phx", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
-    const textplaceholdery = MeshBuilder.CreateBox("phy", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
-    const textplaceholderz = MeshBuilder.CreateBox("phz", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
-    textplaceholderx.position = xtextpos
-    textplaceholdery.position = ytextpos
-    textplaceholderz.position = ztextpos
-}
+//     const textplaceholderx = MeshBuilder.CreateBox("phx", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
+//     const textplaceholdery = MeshBuilder.CreateBox("phy", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
+//     const textplaceholderz = MeshBuilder.CreateBox("phz", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
+//     textplaceholderx.position = xtextpos
+//     textplaceholdery.position = ytextpos
+//     textplaceholderz.position = ztextpos
+// }
