@@ -33,7 +33,8 @@ import {
     GlowLayer,
     ShaderMaterial,
     RenderTargetTexture,
-    HemisphericLight
+    HemisphericLight,
+    BoundingInfo
 } from "@babylonjs/core"
 import "@babylonjs/loaders"
 
@@ -342,8 +343,8 @@ const BabylonComponent = ({ babScene, babCanvas }) => {
                 <div className='postprocess-option'>
                     <input type="checkbox" id="shadows" name="shadows" value="shadows" checked={shadows} onChange={shadowHandler}></input>
                     <label htmlFor="edge">Shadows</label>
-                    <div class="slidecontainer" >
-                        <input type="range" min="1" max="100" class="slider" disabled={!shadows} id="myRange" onChange={(event) => darknessHandler(event.target.value)}></input>
+                    <div className="slidecontainer" >
+                        <input type="range" min="1" max="100" className="slider" disabled={!shadows} id="myRange" onChange={(event) => darknessHandler(event.target.value)}></input>
                     </div>
                 </div>
             </div>
@@ -409,7 +410,9 @@ export const createCube = (color, clone) => {
     shadowGenerator.addShadowCaster(box)
     boxCounter++
     puff()
-   // createLines(box)
+    createLines(box)
+  //  box.refreshBoundingInfo()
+  //  createDimentions(box,box.getBoundingInfo().boundingBox, 0.25)
     return box
 }
 
@@ -550,34 +553,56 @@ const createLines = (mesh, axis, offset) => {
     //attach to mesh as child 
     //optional- split line to fit text 
 
-
-    const lowerline = [
-        new Vector3(0, -0.5, 0),
-        new Vector3(0, -0.2, 0),
-    ]
-    const upperline = [
-        new Vector3(0, 0.2, 0),
-        new Vector3(0, 0.5, 0),
-
-    ]
-    const capline = (ypos) => {
-        const cap = [
-            new Vector3(-0.1, ypos, 0),
-            new Vector3(0.1, ypos, 0),
-        ]
-        return cap
+    if(!offset){
+        offset = 0.6
     }
-    const lines = MeshBuilder.CreateLines("lines", { points: lowerline });
-    const lines2 = MeshBuilder.CreateLines("lines2", { points: upperline });
-    const bottomcap = MeshBuilder.CreateLines("lines2", { points: capline(-0.5) });
-    const topcap = MeshBuilder.CreateLines("lines2", { points: capline(0.5) });
+    const lineX = [
+        new Vector3(-0.5, offset, -offset),
+        new Vector3(0.5, offset, -offset),
+    ]
+    const lineY = [
+        new Vector3(offset, -0.5, -offset),
+        new Vector3(offset, 0.5, -offset),
+    ]
+    const lineZ = [
+        new Vector3(-offset, offset, -0.5),
+        new Vector3(-offset, offset, 0.5),
+    ]
+    // const capline = (ypos) => {
+    //     const cap = [
+    //         new Vector3(-0.1, ypos, 0),
+    //         new Vector3(0.1, ypos, 0),
+    //     ]
+    //     return cap
+    // }
+    const dataObject = {}
+    const lines = MeshBuilder.CreateLines("lines", { points: lineX });
+    const lines2 = MeshBuilder.CreateLines("lines2", { points: lineY });
+    const lines3 = MeshBuilder.CreateLines("lines3", { points: lineZ });
+   // const bottomcap = MeshBuilder.CreateLines("lines2", { points: capline(-0.5) });
+    //const topcap = MeshBuilder.CreateLines("lines2", { points: capline(0.5) });
     const trans = new TransformNode('parent', scene)
-    const grouplines = [lines, lines2, bottomcap, topcap]
+    //const grouplines = [lines, lines2, bottomcap, topcap]
+    const grouplines = [lines, lines2, lines3]
 
-    grouplines.forEach((i) => i.parent = trans)
-    const tempoffset = new Vector3(1, 0, 0.5)
-    const addedpos = addObjects(mesh.position, tempoffset)// + tempoffset
-    trans.position = addedpos
+   // box2.position.copyFrom(box1.position.add(new BABYLON.Vector3(1,1,1)))
+
+    dataObject.x = lines
+   // const xPos = new Vector3(mesh.position.x +  (mesh.scaling.x /2),
+   // mesh.position.y, mesh.position.z)
+   
+   //dataObject.x.position.x = mesh.position.x +  (mesh.scaling.x /2)
+   mesh.scaling.z = 10
+   dataObject.x.position.copyFrom(mesh.position.add(new Vector3(0,0,(-mesh.scaling.z/2)+ 0.5)))
+    console.log(dataObject.x.position)
+    console.log(mesh.position.x)
+    console.log(mesh.scaling.x /2)
+    //grouplines.forEach((i) => i.parent = trans)
+    //const tempoffset = new Vector3(1, 0, 0.5)
+    //const addedpos = addObjects(mesh.position, tempoffset)// + tempoffset
+    //trans.position.y = 0.5
+   // trans.position = addedpos
+   // trans.parent = mesh
 }
 
 const lineText = (parent, text) => {
@@ -592,4 +617,45 @@ const applyCustomShader = (customMaterial) => {
 
     scene.customRenderTargets.push(renderTarget)// stores render target texture from vertex colors
 
+}
+
+const createDimentions  = (mesh,bounding, offset) => {
+    const meshPosCenter = bounding.centerWorld.add(mesh.position);
+    const meshSize = bounding.extendSizeWorld.add(mesh.position);
+    const bbv = bounding.vectorsWorld
+    console.log(bounding.vectorsWorld[5])
+    console.log(bounding.vectorsWorld)
+
+
+    //TODO add offset to line using helper script 
+    let xLine = [bbv[3], bbv[5]]
+    let yLine = [bbv[5], bbv[2]]
+    let zLine = [bbv[3], bbv[6]]
+
+    const lineCoordinates = [xLine, yLine, zLine];
+
+    const dimensionLines = MeshBuilder.CreateLineSystem("Lines", { lines: lineCoordinates, updatable: true }, scene);
+    dimensionLines.color = new Color3(1, 1, 1);
+    
+
+   window.lines = dimensionLines
+    const linesP =  new TransformNode("linesp", scene)
+    dimensionLines.parent = linesP
+    //linesP.position.y  = mesh.position.y
+    console.log(dimensionLines.position.y)
+
+    if(!offset){
+        offset = 0.25
+    }
+
+    let xtextpos = new Vector3(meshPosCenter.x, meshSize.y + offset, bbv[3].z)
+    let ytextpos = new Vector3(meshSize.x + offset, meshPosCenter.y, bbv[5].z)
+    let ztextpos = new Vector3(bbv[3].x, meshSize.y + offset, meshPosCenter.z)
+
+    const textplaceholderx = MeshBuilder.CreateBox("phx", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
+    const textplaceholdery = MeshBuilder.CreateBox("phy", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
+    const textplaceholderz = MeshBuilder.CreateBox("phz", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
+    textplaceholderx.position = xtextpos
+    textplaceholdery.position = ytextpos
+    textplaceholderz.position = ztextpos
 }
