@@ -83,6 +83,7 @@ const Controls = ({ scene, canvas }) => {
             scene.onPointerMove = () => {
                 pointerMove(mesh)
                 updateLinesPositions(mesh)
+                updateLinesPositions(mesh, mesh.id.includes("extruded")? true: false )
             }
         }
 
@@ -159,13 +160,14 @@ const Controls = ({ scene, canvas }) => {
     }
 
     const destory = (mesh) => {
+        //TODO foreach line in mesh dispose
         mesh.dispose()
         setSelected({})
         if (selected.id.includes("box")) {
 
             setCount(count - 1)
         }
-        else {
+        if(selected.id.includes("extruded")) {
             setCapCount(capCount - 1)
         }
     }
@@ -205,11 +207,10 @@ const Controls = ({ scene, canvas }) => {
         //mesh
         scaleAnimation(currentMesh.current, property, currentMesh.current.scaling[axis], value)
 
-
         //lines scale
         scaleAnimation(currentMesh.current.lines[axis], property, currentMesh.current.scaling[axis], value)
         //lines posistion
-        updateLinesPositions(currentMesh.current)
+        updateLinesPositions(currentMesh.current, currentMesh.current.id.includes("extruded")? true: false )
         updateText(currentMesh.current.lines[axis].text, value + "m")
 
         if (axis === 'y') {
@@ -262,7 +263,7 @@ const Controls = ({ scene, canvas }) => {
 
     const deleteAll = () => {
         let newObjects = []
-        const keywords = ["extruded", "box", "lines"];
+        const keywords = ["extruded", "box", "lines", "textplane"];
         //group all added objects by name 
         for (let i = 0; i < scene.meshes.length; i++) {
             if (keywords.some(keyword => scene.meshes[i].name.includes(keyword))) {

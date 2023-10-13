@@ -615,9 +615,9 @@ const createLines = (mesh, ext, offset=0.6) => {
     lineGroup.z = MeshBuilder.CreateLines("lines3", { points: lineZ });
     
     mesh.lines = lineGroup //add lines directly to mesh object but not parented
-    mesh.lines.x.text = lineText("X", mesh.lines.x.position, new Vector3(1,1,1))
-    mesh.lines.y.text = lineText("Y", mesh.lines.y.position, new Vector3(1,1,1))
-    mesh.lines.z.text = lineText("Z", mesh.lines.z.position, new Vector3(1,1,1))
+    mesh.lines.x.text = lineText(mesh.scaling.x + "m", mesh.lines.x.position, new Vector3(1,1,1))
+    mesh.lines.y.text = lineText(mesh.scaling.y + "m", mesh.lines.y.position, new Vector3(1,1,1))
+    mesh.lines.z.text = lineText(mesh.scaling.z + "m", mesh.lines.z.position, new Vector3(1,1,1))
 
     setlines(mesh, true, true)
     
@@ -638,35 +638,31 @@ export const setlines=(mesh, scale)=>{
     if(!mesh.lines){
         throw console.error("Lines not attached to mesh: "+ mesh.name);
     }
-    
-    mesh.lines.x.position.copyFrom(mesh.position.add(new Vector3(ext? mesh.scaling.x/2 : 0, 0 ,(-mesh.scaling.z/2)+ 0.5)))
+   // mesh.getBoundingInfo().boundingBox.extendSizeWorld - does not update in frame
 
-
-    mesh.lines.y.position.copyFrom(mesh.position.add(new Vector3(ext? mesh.scaling.x -0.5: (mesh.scaling.x/2)- 0.5),0,0))
-    mesh.lines.z.position.copyFrom(mesh.position.add(new Vector3(ext? +0.5: (-mesh.scaling.x/2)+ 0.5),0,0))        
-
-
+    updateLinesPositions(mesh, ext)
     
     if(scale){
-    mesh.lines.x.scaling.x = mesh.scaling.x 
+    mesh.lines.x.scaling.x = mesh.scaling.x  //these are all diferfent objects
     mesh.lines.y.scaling.y = mesh.scaling.y 
     mesh.lines.z.scaling.z = mesh.scaling.z  
     }
 
 }
 
-export const updateLinesPositions= (selected) =>{
-    const offset = 0.5
-    selected.lines.x.position.copyFrom(selected.position.add(new Vector3(0, (selected.scaling.y / 2) + offset , (-selected.scaling.z / 2) + offset)))
-    selected.lines.z.position.copyFrom(selected.position.add(new Vector3(-selected.scaling.x / 2 + offset, selected.scaling.y / 2 + offset, 0)))
-    selected.lines.y.position.copyFrom(selected.position.add(new Vector3(selected.scaling.x / 2 - offset, offset, (-selected.scaling.z / 2) + offset))) //TODO fix  delay 
+export const updateLinesPositions= (selected, ext) =>{
+    const offset = 0.2
+
+    selected.lines.x.position.copyFrom(selected.position.add(new Vector3(ext?selected.scaling.x / 2 :  0, (selected.scaling.y / 2) + offset , (-selected.scaling.z / 2) - offset)))
+    selected.lines.y.position.copyFrom(selected.position.add(new Vector3(ext? selected.scaling.x + offset : selected.scaling.x / 2 + offset, 0, (-selected.scaling.z / 2) - offset))) //TODO fix  delay 
+    selected.lines.z.position.copyFrom(selected.position.add(new Vector3(ext? -offset : -selected.scaling.x / 2 - offset, selected.scaling.y / 2 + offset, 0)))
 
 }
 
 const lineText = (text, posistion, size) => {
         //data reporter
-        const outputplane = Mesh.CreatePlane("outputplane", Math.max(size.x, size.y, size.z), scene, false);
-        outputplane.material = new StandardMaterial("outputplane", scene);
+        const outputplane = Mesh.CreatePlane("textplane", Math.max(size.x, size.y, size.z), scene, false);
+        outputplane.material = new StandardMaterial("textplane", scene);
         outputplane.position = posistion
         outputplane.billboardMode = Mesh.BILLBOARDMODE_ALL;
         var outputplaneTexture = new DynamicTexture("dynamic texture", 512, scene, true);
