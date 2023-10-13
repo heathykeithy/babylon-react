@@ -569,21 +569,6 @@ const resetVertColors = (mesh) => {
  * @param {number} offset - Offset value for positioning the lines on the axes.
  */
 const createLines = (mesh, ext, offset=0.6) => {
-    //create line for each axis of scaling
-    //offset on axis 
-
-    // const lineX = [
-    //     new Vector3(-0.5, offset, -offset),
-    //     new Vector3(0.5, offset, -offset),
-    // ]
-    // const lineY = [ //HACK if extusion + half size (temp fix)
-    //     new Vector3(offset, ext? 0: -0.5, -offset),
-    //     new Vector3(offset, 0.5, -offset),
-    // ]
-    // const lineZ = [
-    //     new Vector3(-offset, offset, -0.5),
-    //     new Vector3(-offset, offset, 0.5),
-    // ]
 
     const lineX = [
         new Vector3(-0.5, 0, -0),
@@ -608,7 +593,7 @@ const createLines = (mesh, ext, offset=0.6) => {
     //     ]
     //     return cap
     // }
-    mesh.scaling.x = 10
+    //mesh.scaling.x = 10 //for testing
     const lineGroup = {}
     lineGroup.x = MeshBuilder.CreateLines("lines", { points: lineX });
     lineGroup.y = MeshBuilder.CreateLines("lines2", { points: lineY });
@@ -631,7 +616,6 @@ const createLines = (mesh, ext, offset=0.6) => {
  */
 export const setlines=(mesh, scale)=>{
     let ext
-    //TODO update on scale
     if(mesh.id.includes("extruded")){
         ext = true
     }
@@ -689,15 +673,9 @@ export const updateText= (textMesh, text) =>{
 //     scene.customRenderTargets.push(renderTarget)// stores render target texture from vertex colors
 // }
 
-// const createDimentions  = (mesh,bounding, offset) => {
-//     const meshPosCenter = bounding.centerWorld.add(mesh.position);
-//     const meshSize = bounding.extendSizeWorld.add(mesh.position);
+// create lines from bounding.vectorsWorld - Does not update before lines are created
 //     const bbv = bounding.vectorsWorld
-//     console.log(bounding.vectorsWorld[5])
-//     console.log(bounding.vectorsWorld)
 
-
-//     //TODO add offset to line using helper script 
 //     let xLine = [bbv[3], bbv[5]]
 //     let yLine = [bbv[5], bbv[2]]
 //     let zLine = [bbv[3], bbv[6]]
@@ -705,27 +683,3 @@ export const updateText= (textMesh, text) =>{
 //     const lineCoordinates = [xLine, yLine, zLine];
 
 //     const dimensionLines = MeshBuilder.CreateLineSystem("Lines", { lines: lineCoordinates, updatable: true }, scene);
-//     dimensionLines.color = new Color3(1, 1, 1);
-    
-
-//    window.lines = dimensionLines
-//     const linesP =  new TransformNode("linesp", scene)
-//     dimensionLines.parent = linesP
-//     //linesP.position.y  = mesh.position.y
-//     console.log(dimensionLines.position.y)
-
-//     if(!offset){
-//         offset = 0.25
-//     }
-
-//     let xtextpos = new Vector3(meshPosCenter.x, meshSize.y + offset, bbv[3].z)
-//     let ytextpos = new Vector3(meshSize.x + offset, meshPosCenter.y, bbv[5].z)
-//     let ztextpos = new Vector3(bbv[3].x, meshSize.y + offset, meshPosCenter.z)
-
-//     const textplaceholderx = MeshBuilder.CreateBox("phx", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
-//     const textplaceholdery = MeshBuilder.CreateBox("phy", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
-//     const textplaceholderz = MeshBuilder.CreateBox("phz", { width: 0.2, height: 0.2, depth: 0.2 }, scene);
-//     textplaceholderx.position = xtextpos
-//     textplaceholdery.position = ytextpos
-//     textplaceholderz.position = ztextpos
-// }

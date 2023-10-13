@@ -160,11 +160,14 @@ const Controls = ({ scene, canvas }) => {
     }
 
     const destory = (mesh) => {
-        //TODO foreach line in mesh dispose
+        const channels = ["x","y","z"]
+        for (let i = 0; i < channels.length; i++) {
+            mesh.lines[channels[i]].text.dispose() //text
+            mesh.lines[channels[i]].dispose() //line
+        }
         mesh.dispose()
         setSelected({})
         if (selected.id.includes("box")) {
-
             setCount(count - 1)
         }
         if(selected.id.includes("extruded")) {
